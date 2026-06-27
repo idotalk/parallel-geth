@@ -137,6 +137,14 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			continue
 		}
 
+		for _, i := range sortedIdx {
+			tx := txs[i]
+			if err := gp.SubGas(tx.Gas()); err != nil {
+				fmt.Printf("failed to reserve gas for transaction %d [%v]: %v", i, tx.Hash().Hex(), err)
+				return nil, err
+			}
+		}
+
 		txForks := make([]*state.StateDB, n)
 		var wg sync.WaitGroup
 		var errMu sync.Mutex
@@ -164,7 +172,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 				parallelEVM := vm.NewEVM(context, parallelStateDB, p.config, cfg)
 				child.SetTxContext(tx.Hash(), i)
 				var txGasUsed uint64
-				receipt, err := ApplyTransactionWithEVM(msg, gp, child, blockNumber, blockHash, context.Time, tx, &txGasUsed, parallelEVM)
+				localGasPool := new(GasPool).AddGas(tx.Gas())
+				receipt, err := ApplyTransactionWithEVM(msg, localGasPool, child, blockNumber, blockHash, context.Time, tx, &txGasUsed, parallelEVM)
 				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
@@ -183,6 +192,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		}
 		for _, i := range sortedIdx {
 			statedb.MergeParallelChildInto(txForks[i], txs[i].Hash())
+			unusedGas := txs[i].Gas() - receipts[i].GasUsed
+			gp.AddGas(unusedGas)
 		}
 		if err := statedb.Error(); err != nil {
 			return nil, err
