@@ -194,7 +194,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			}
 			statedb.MergeParallelChildInto(txForks[i], txs[i].Hash())
 		}
-		// ponytail: Coinbase balance deltas are additive; dynamic reads
+		// Coinbase balance deltas are additive; dynamic reads
 		// conflicts still require observed read/write sets and speculative re-execution and are not handled.
 		statedb.SetBalance(header.Coinbase, coinbaseFinal, tracing.BalanceIncreaseRewardTransactionFee)
 		if err := statedb.Error(); err != nil {
