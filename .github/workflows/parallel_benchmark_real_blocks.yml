@@ -7,7 +7,7 @@ on:
 
 jobs:
   benchmark:
-    name: Run Parallel Benchmarks - Synthetic Blocks
+    name: Run Parallel Benchmarks - Real Blocks
     runs-on: ubuntu-latest
     permissions:
       contents: write # Results will be pushed back to the PR
@@ -28,11 +28,12 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref }}
         run: |
           # The benchmark outputs results to BENCHMARK_OUTPUT_FILE
-          export BENCHMARK_OUTPUT_FILE=$GITHUB_WORKSPACE/benchmarks/results/synthetic_blocks_benchmark.txt
-          go test -v ./benchmarks -run TestParallelBenchmarkOutput -timeout 15m
+          export BENCHMARK_OUTPUT_FILE=$GITHUB_WORKSPACE/benchmarks/results/real_blocks_benchmark.txt
+          export BENCHMARK_JSON_INPUT_DIR=$GITHUB_WORKSPACE/benchmarks/blocks/blocksdata
+          go test -v ./benchmarks -run TestParallelBenchmarkAgainstRealBlocks
 
       - name: Commit benchmark results
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update parallel execution benchmark results"
-          file_pattern: "benchmarks/results/synthetic_blocks_benchmark.txt"
+          file_pattern: "benchmarks/results/real_blocks_benchmark.txt"
