@@ -1,0 +1,2 @@
+[2026-07-18][benchmark/real_blocks_benchmark][25560620.json][319_txs] - Sequential: 0.029s (0.09ms/tx), Parallel: 0.035s (0.11ms/tx), Speedup: 0.82x
+[2026-07-18][benchmark/real_blocks_benchmark][25560699.json][243_txs] - Sequential: 0.025s (0.10ms/tx), Parallel: 0.031s (0.13ms/tx), Speedup: 0.78x
