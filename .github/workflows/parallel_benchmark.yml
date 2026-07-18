@@ -29,7 +29,7 @@ jobs:
         run: |
           # The benchmark outputs results to BENCHMARK_OUTPUT_FILE
           export BENCHMARK_OUTPUT_FILE=$GITHUB_WORKSPACE/benchmarks/results/synthetic_blocks_benchmark.txt
-          go test -v ./benchmarks -run TestParallelBenchmarkOutput -timeout 15m
+          go test -v ./tests -run TestParallelBenchmarkOutput -timeout 15m
 
       - name: Commit benchmark results
         uses: stefanzweifel/git-auto-commit-action@v5

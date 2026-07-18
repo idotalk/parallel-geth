@@ -28,7 +28,7 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref }}
         run: |
           # The benchmark outputs results to BENCHMARK_OUTPUT_FILE
-          export BENCHMARK_OUTPUT_FILE=$GITHUB_WORKSPACE/benchmarks/results/real_blocks_benchmark.txt
+          export BENCHMARK_OUTPUT_FILE_REAL_BLOCKS=$GITHUB_WORKSPACE/benchmarks/results/real_blocks_benchmark.txt
           export BENCHMARK_JSON_INPUT_DIR=$GITHUB_WORKSPACE/benchmarks/blocks/blocksdata
           go test -v ./benchmarks -run TestParallelBenchmarkAgainstRealBlocks
 
