@@ -3,9 +3,11 @@ package benchmarks
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -84,6 +86,15 @@ var benchChainConfig = &params.ChainConfig{
 }
 
 func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
+	originalGrouping := core.ParallelTxGroupingByStorageOverlap
+	originalWaveExecution := core.ParallelTxWaveExecution
+	defer func() {
+		core.ParallelTxGroupingByStorageOverlap = originalGrouping
+		core.ParallelTxWaveExecution = originalWaveExecution
+	}()
+	core.ClearParallelTxTimings()
+	defer core.PrintAndClearParallelTxTimings()
+
 	branchName := os.Getenv("BRANCH_NAME")
 	if branchName == "" {
 		branchName = "unknown-branch"
@@ -92,6 +103,14 @@ func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
 	outPath := os.Getenv("BENCHMARK_OUTPUT_FILE_REAL_BLOCKS")
 	if outPath == "" {
 		t.Skip("BENCHMARK_OUTPUT_FILE_REAL_BLOCKS not set, skipping benchmark execution tracking")
+	}
+	runs := 1
+	if value := os.Getenv("BENCHMARK_RUNS"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 1 {
+			t.Fatalf("invalid BENCHMARK_RUNS %q", value)
+		}
+		runs = parsed
 	}
 
 	inputDir := os.Getenv("BENCHMARK_JSON_INPUT_DIR")
@@ -118,34 +137,40 @@ func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
 		}
 
 		filePath := filepath.Join(inputDir, file.Name())
-		blocks, genesis, txCount, dropped, err := parseTestJSONFile(filePath, engine)
+		blocks, genesis, txCount, _, err := parseTestJSONFile(filePath, engine)
 		if err != nil {
 			t.Logf("skipping file %s due to parsing error: %v", file.Name(), err)
 			continue
-		}
-		if dropped > 0 {
-			t.Logf("%s: dropped %d tx(s) with incomplete fee data (original signature can't be validated without it)", file.Name(), dropped)
 		}
 		if txCount == 0 {
 			continue
 		}
 
-		// Profile Sequential Run
-		core.ParallelTxGroupingByStorageOverlap = false
-		seqTime := timeInsertLocal(t, blocks, genesis, engine)
+		warmExecutionPaths(t, blocks, genesis, engine)
 
-		// Profile Parallel Run
-		core.ParallelTxGroupingByStorageOverlap = true
-		parTime := timeInsertLocal(t, blocks, genesis, engine)
+		seqSamples := make([]float64, 0, runs)
+		parSamples := make([]float64, 0, runs)
+		speedupSamples := make([]float64, 0, runs)
+		for run := 0; run < runs; run++ {
+			var seqTime, parTime time.Duration
+			if run%2 == 0 {
+				seqTime = timeSequentialInsert(t, blocks, genesis, engine)
+				parTime = timeParallelInsert(t, blocks, genesis, engine)
+			} else {
+				parTime = timeParallelInsert(t, blocks, genesis, engine)
+				seqTime = timeSequentialInsert(t, blocks, genesis, engine)
+			}
+			seqSamples = append(seqSamples, seqTime.Seconds())
+			parSamples = append(parSamples, parTime.Seconds())
+			speedupSamples = append(speedupSamples, float64(seqTime)/float64(parTime))
+		}
+		seqAvg, seqStd := meanStddev(seqSamples)
+		parAvg, parStd := meanStddev(parSamples)
+		speedupAvg, speedupStd := meanStddev(speedupSamples)
 
-		speedup := float64(seqTime) / float64(parTime)
-		seqAvgMs := (seqTime.Seconds() / float64(txCount)) * 1000
-		parAvgMs := (parTime.Seconds() / float64(txCount)) * 1000
+		resLine := fmt.Sprintf("[%s][%s][%s][%d_txs][%d_runs] - Sequential: avg=%.6fs std=%.6fs, Parallel: avg=%.6fs std=%.6fs, Speedup: avg=%.3fx std=%.3fx",
+			dateStr, branchName, file.Name(), txCount, runs, seqAvg, seqStd, parAvg, parStd, speedupAvg, speedupStd)
 
-		resLine := fmt.Sprintf("[%s][%s][%s][%d_txs] - Sequential: %.3fs (%.2fms/tx), Parallel: %.3fs (%.2fms/tx), Speedup: %.2fx",
-			dateStr, branchName, file.Name(), txCount, seqTime.Seconds(), seqAvgMs, parTime.Seconds(), parAvgMs, speedup)
-
-		t.Log(resLine)
 		results = append(results, resLine)
 	}
 
@@ -167,6 +192,50 @@ func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
 			t.Fatalf("failed to write metrics data: %v", err)
 		}
 	}
+
+	core.PrintAndClearParallelTxTimings()
+	fmt.Println("\nbenchmark summary:")
+	for _, res := range results {
+		fmt.Println(res)
+	}
+}
+
+func warmExecutionPaths(t *testing.T, blocks []*types.Block, genesis *core.Genesis, engine consensus.Engine) {
+	timing := core.ParallelTxTiming
+	core.ParallelTxTiming = false
+	defer func() { core.ParallelTxTiming = timing }()
+
+	timeSequentialInsert(t, blocks, genesis, engine)
+	timeParallelInsert(t, blocks, genesis, engine)
+}
+
+func timeSequentialInsert(t *testing.T, blocks []*types.Block, genesis *core.Genesis, engine consensus.Engine) time.Duration {
+	core.ParallelTxGroupingByStorageOverlap = false
+	core.ParallelTxWaveExecution = false
+	return timeInsertLocal(t, blocks, genesis, engine)
+}
+
+func timeParallelInsert(t *testing.T, blocks []*types.Block, genesis *core.Genesis, engine consensus.Engine) time.Duration {
+	core.ParallelTxGroupingByStorageOverlap = true
+	core.ParallelTxWaveExecution = true
+	return timeInsertLocal(t, blocks, genesis, engine)
+}
+
+func meanStddev(samples []float64) (float64, float64) {
+	var sum float64
+	for _, sample := range samples {
+		sum += sample
+	}
+	mean := sum / float64(len(samples))
+	if len(samples) == 1 {
+		return mean, 0
+	}
+	var squaredDiffs float64
+	for _, sample := range samples {
+		diff := sample - mean
+		squaredDiffs += diff * diff
+	}
+	return mean, math.Sqrt(squaredDiffs / float64(len(samples)-1))
 }
 
 func timeInsertLocal(t *testing.T, blocks []*types.Block, genesis *core.Genesis, engine consensus.Engine) time.Duration {
@@ -185,22 +254,16 @@ func timeInsertLocal(t *testing.T, blocks []*types.Block, genesis *core.Genesis,
 	}
 	defer chain.Stop()
 
-	// Warmup block execution
-	if n, err := chain.InsertChain(blocks[:1]); err != nil {
-		t.Fatalf("warmup block %d failed: %v", n, err)
-	}
-
 	// Timed target block execution
 	start := time.Now()
-	if n, err := chain.InsertChain(blocks[1:]); err != nil {
+	if n, err := chain.InsertChain(blocks); err != nil {
 		t.Fatalf("benchmark block %d failed: %v", n, err)
 	}
 	return time.Since(start)
 }
 
 // parseTestJSONFile reads the JSON fixture and builds a real, executable
-// 2-block chain: an empty warmup block followed by the target block
-// containing the file's transactions. Blocks are produced with
+// target block directly on top of genesis. Blocks are produced with
 // core.GenerateChain, which actually runs the EVM/state processor while
 // building each block, so state root, receipt root, tx root, gas used, and
 // bloom are all filled in correctly.
@@ -325,11 +388,7 @@ func parseTestJSONFile(path string, engine consensus.Engine) ([]*types.Block, *c
 	genTrieDB := triedb.NewDatabase(genDB, triedb.HashDefaults)
 	genesisBlock := genesis.MustCommit(genDB, genTrieDB)
 
-	blocks, _ := core.GenerateChain(benchChainConfig, genesisBlock, engine, genDB, 2, func(i int, gen *core.BlockGen) {
-		if i == 0 {
-			// Warmup block: intentionally empty.
-			return
-		}
+	blocks, _ := core.GenerateChain(benchChainConfig, genesisBlock, engine, genDB, 1, func(i int, gen *core.BlockGen) {
 		// Target/benchmark block: real transactions from the JSON file,
 		// original signatures intact, in original block order (required so
 		// repeat senders' nonces increment correctly as each executes).

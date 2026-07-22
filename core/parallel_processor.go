@@ -54,21 +54,22 @@ func BuildTransactionStorageParallelGroups(txs []*types.Transaction, signer type
 			break
 		}
 		group := []int{seed}
+		groupAddresses := make(map[common.Address]struct{}, len(addrSets[seed]))
+		for addr := range addrSets[seed] {
+			groupAddresses[addr] = struct{}{}
+		}
 		unassigned[seed] = false
 		for j := 0; j < n; j++ {
 			if !unassigned[j] {
 				continue
 			}
-			conflict := false
-			for _, gi := range group {
-				if declaredAddressSetsOverlap(addrSets[gi], addrSets[j]) {
-					conflict = true
-					break
-				}
+			if declaredAddressSetsOverlap(addrSets[j], groupAddresses) {
+				continue
 			}
-			if !conflict {
-				group = append(group, j)
-				unassigned[j] = false
+			group = append(group, j)
+			unassigned[j] = false
+			for addr := range addrSets[j] {
+				groupAddresses[addr] = struct{}{}
 			}
 		}
 		groups = append(groups, group)
