@@ -3,3 +3,6 @@
 [2026-07-24][optimization/real_blocks][25560620.json][319_txs][1_runs] - Sequential: avg=0.022552s std=0.000000s, Parallel: avg=0.019753s std=0.000000s, Speedup: avg=1.142x std=0.000x
 [2026-07-24][optimization/real_blocks][25560699.json][243_txs][1_runs] - Sequential: avg=0.016453s std=0.000000s, Parallel: avg=0.019066s std=0.000000s, Speedup: avg=0.863x std=0.000x
 [2026-07-24][optimization/real_blocks][25582333.json][110_txs][1_runs] - Sequential: avg=0.007409s std=0.000000s, Parallel: avg=0.005839s std=0.000000s, Speedup: avg=1.269x std=0.000x
+[2026-07-24][optimization/real_blocks][25560620.json][319_txs][1_runs] - Sequential: avg=0.021925s std=0.000000s, Parallel: avg=0.019938s std=0.000000s, Speedup: avg=1.100x std=0.000x
+[2026-07-24][optimization/real_blocks][25560699.json][243_txs][1_runs] - Sequential: avg=0.015779s std=0.000000s, Parallel: avg=0.019172s std=0.000000s, Speedup: avg=0.823x std=0.000x
+[2026-07-24][optimization/real_blocks][25582333.json][110_txs][1_runs] - Sequential: avg=0.007919s std=0.000000s, Parallel: avg=0.005846s std=0.000000s, Speedup: avg=1.355x std=0.000x
