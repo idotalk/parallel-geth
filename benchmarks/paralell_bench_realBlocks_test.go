@@ -112,6 +112,13 @@ func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
 		}
 		runs = parsed
 	}
+	mode := strings.ToLower(os.Getenv("BENCHMARK_MODE"))
+	if mode == "" {
+		mode = "both"
+	}
+	if mode != "both" && mode != "sequential" && mode != "parallel" {
+		t.Fatalf("invalid BENCHMARK_MODE %q (want both|sequential|parallel)", mode)
+	}
 
 	inputDir := os.Getenv("BENCHMARK_JSON_INPUT_DIR")
 	if inputDir == "" {
@@ -152,24 +159,44 @@ func TestParallelBenchmarkAgainstRealBlocks(t *testing.T) {
 		parSamples := make([]float64, 0, runs)
 		speedupSamples := make([]float64, 0, runs)
 		for run := 0; run < runs; run++ {
-			var seqTime, parTime time.Duration
-			if run%2 == 0 {
-				seqTime = timeSequentialInsert(t, blocks, genesis, engine)
-				parTime = timeParallelInsert(t, blocks, genesis, engine)
-			} else {
-				parTime = timeParallelInsert(t, blocks, genesis, engine)
-				seqTime = timeSequentialInsert(t, blocks, genesis, engine)
+			switch mode {
+			case "sequential":
+				seqTime := timeSequentialInsert(t, blocks, genesis, engine)
+				seqSamples = append(seqSamples, seqTime.Seconds())
+			case "parallel":
+				parTime := timeParallelInsert(t, blocks, genesis, engine)
+				parSamples = append(parSamples, parTime.Seconds())
+			default:
+				var seqTime, parTime time.Duration
+				if run%2 == 0 {
+					seqTime = timeSequentialInsert(t, blocks, genesis, engine)
+					parTime = timeParallelInsert(t, blocks, genesis, engine)
+				} else {
+					parTime = timeParallelInsert(t, blocks, genesis, engine)
+					seqTime = timeSequentialInsert(t, blocks, genesis, engine)
+				}
+				seqSamples = append(seqSamples, seqTime.Seconds())
+				parSamples = append(parSamples, parTime.Seconds())
+				speedupSamples = append(speedupSamples, float64(seqTime)/float64(parTime))
 			}
-			seqSamples = append(seqSamples, seqTime.Seconds())
-			parSamples = append(parSamples, parTime.Seconds())
-			speedupSamples = append(speedupSamples, float64(seqTime)/float64(parTime))
 		}
-		seqAvg, seqStd := meanStddev(seqSamples)
-		parAvg, parStd := meanStddev(parSamples)
-		speedupAvg, speedupStd := meanStddev(speedupSamples)
-
-		resLine := fmt.Sprintf("[%s][%s][%s][%d_txs][%d_runs] - Sequential: avg=%.6fs std=%.6fs, Parallel: avg=%.6fs std=%.6fs, Speedup: avg=%.3fx std=%.3fx",
-			dateStr, branchName, file.Name(), txCount, runs, seqAvg, seqStd, parAvg, parStd, speedupAvg, speedupStd)
+		var resLine string
+		switch mode {
+		case "sequential":
+			seqAvg, seqStd := meanStddev(seqSamples)
+			resLine = fmt.Sprintf("[%s][%s][%s][%d_txs][%d_runs][sequential] - avg=%.6fs std=%.6fs",
+				dateStr, branchName, file.Name(), txCount, runs, seqAvg, seqStd)
+		case "parallel":
+			parAvg, parStd := meanStddev(parSamples)
+			resLine = fmt.Sprintf("[%s][%s][%s][%d_txs][%d_runs][parallel] - avg=%.6fs std=%.6fs",
+				dateStr, branchName, file.Name(), txCount, runs, parAvg, parStd)
+		default:
+			seqAvg, seqStd := meanStddev(seqSamples)
+			parAvg, parStd := meanStddev(parSamples)
+			speedupAvg, speedupStd := meanStddev(speedupSamples)
+			resLine = fmt.Sprintf("[%s][%s][%s][%d_txs][%d_runs] - Sequential: avg=%.6fs std=%.6fs, Parallel: avg=%.6fs std=%.6fs, Speedup: avg=%.3fx std=%.3fx",
+				dateStr, branchName, file.Name(), txCount, runs, seqAvg, seqStd, parAvg, parStd, speedupAvg, speedupStd)
+		}
 
 		results = append(results, resLine)
 	}
@@ -205,8 +232,16 @@ func warmExecutionPaths(t *testing.T, blocks []*types.Block, genesis *core.Genes
 	core.ParallelTxTiming = false
 	defer func() { core.ParallelTxTiming = timing }()
 
-	timeSequentialInsert(t, blocks, genesis, engine)
-	timeParallelInsert(t, blocks, genesis, engine)
+	mode := strings.ToLower(os.Getenv("BENCHMARK_MODE"))
+	switch mode {
+	case "sequential":
+		timeSequentialInsert(t, blocks, genesis, engine)
+	case "parallel":
+		timeParallelInsert(t, blocks, genesis, engine)
+	default:
+		timeSequentialInsert(t, blocks, genesis, engine)
+		timeParallelInsert(t, blocks, genesis, engine)
+	}
 }
 
 func timeSequentialInsert(t *testing.T, blocks []*types.Block, genesis *core.Genesis, engine consensus.Engine) time.Duration {

@@ -6,6 +6,8 @@
 
 */**/*un~
 */**/*.test
+*/**/*.test.exe
+*/**/*.out
 *un~
 .DS_Store
 */**/.DS_Store

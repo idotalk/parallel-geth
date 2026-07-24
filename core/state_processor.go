@@ -196,11 +196,10 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 					return
 				}
 				cloneStart := time.Now()
-				child := statedb.Copy()
+				child := statedb.CopyForParallelTx()
 				cloneSum.Add(int64(time.Since(cloneStart)))
 
 				setupStart := time.Now()
-				child.SetDeferTrieFlush(true)
 				var parallelStateDB vm.StateDB = child
 				if hooks := cfg.Tracer; hooks != nil {
 					parallelStateDB = state.NewHookedState(child, hooks)
@@ -312,7 +311,7 @@ type wavePhaseTiming struct {
 	wall           time.Duration
 	concurrentWall time.Duration // wall for parallel goroutine phase
 	messageSum     time.Duration // TransactionToMessage, summed across txs
-	cloneSum       time.Duration // StateDB.Copy, summed across txs
+	cloneSum       time.Duration // StateDB.CopyForParallelTx, summed across txs
 	setupSum       time.Duration // child state and EVM setup, summed across txs
 	execSum        time.Duration // per-tx EVM execution, summed across txs
 	mergeWall      time.Duration // wall for sequential merge phase

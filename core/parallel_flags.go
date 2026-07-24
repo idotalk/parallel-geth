@@ -33,7 +33,7 @@ var ParallelTxWaveExecution = true
 // ParallelTxDirectExecutionMaxWaveSize is the largest wave that executes
 // directly on the shared StateDB, avoiding per-transaction state copies,
 // goroutines, child EVMs, and merging. The default optimizes singleton waves.
-var ParallelTxDirectExecutionMaxWaveSize = 3
+var ParallelTxDirectExecutionMaxWaveSize = 4
 
 // ParallelTxDebug enables debug logging for parallel transaction execution.
 var ParallelTxDebug = false
