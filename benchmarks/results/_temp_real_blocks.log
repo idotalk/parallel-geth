@@ -1,0 +1,3 @@
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+[2026-07-24][local][25560620.json][319_txs][100_runs] - Sequential: avg=0.032887s std=0.030900s, Parallel: avg=0.025110s std=0.014381s, Speedup: avg=1.277x std=0.694x

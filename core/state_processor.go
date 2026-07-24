@@ -21,6 +21,7 @@ import (
 	"math/big"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -109,48 +110,83 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	txs := block.Transactions()
 	n := len(txs)
 	receipts = make([]*types.Receipt, n)
+
+	var groupingWall time.Duration
+	groupingStart := time.Now()
 	groups, err := BuildTransactionStorageParallelGroups(txs, signer)
 	if err != nil {
 		return nil, fmt.Errorf("build tx parallel groups: %w", err)
 	}
+	if ParallelTxTiming {
+		groupingWall = time.Since(groupingStart)
+	}
 
-	txWaveExecStart := time.Now()
+	var waveTimings []wavePhaseTiming
+	if ParallelTxTiming {
+		waveTimings = make([]wavePhaseTiming, 0, len(groups))
+	}
 
 	for groupIdx, group := range groups {
+		waveStart := time.Now()
 		sortedIdx := append([]int(nil), group...)
 		sort.Ints(sortedIdx)
+		waveTiming := wavePhaseTiming{txCount: len(sortedIdx)}
 
-		if len(sortedIdx) == 1 || !ParallelTxWaveExecution {
+		if len(sortedIdx) <= ParallelTxDirectExecutionMaxWaveSize || !ParallelTxWaveExecution {
 			for _, i := range sortedIdx {
 				tx := txs[i]
+				messageStart := time.Now()
 				msg, err := TransactionToMessage(tx, signer, header.BaseFee)
+				if ParallelTxTiming {
+					waveTiming.messageSum += time.Since(messageStart)
+				}
 				if err != nil {
 					return nil, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 				}
+				setupStart := time.Now()
 				statedb.SetTxContext(tx.Hash(), i)
+				if ParallelTxTiming {
+					waveTiming.setupSum += time.Since(setupStart)
+				}
+				execStart := time.Now()
 				var txGasUsed uint64
 				receipt, err := ApplyTransactionWithEVM(msg, gp, statedb, blockNumber, blockHash, context.Time, tx, &txGasUsed, evm)
 				if err != nil {
 					return nil, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 				}
 				receipts[i] = receipt
+				if ParallelTxTiming {
+					waveTiming.execSum += time.Since(execStart)
+				}
 			}
-			fmt.Printf("finished transaction execution group %d (tx indices, sequential in-wave): %v\n", groupIdx, sortedIdx)
+			if ParallelTxDebug {
+				fmt.Printf("finished transaction execution group %d (tx indices, sequential in-wave): %v\n", groupIdx, sortedIdx)
+			}
+			if ParallelTxTiming {
+				waveTiming.wall = time.Since(waveStart)
+				waveTimings = append(waveTimings, waveTiming)
+			}
 			continue
 		}
 
+		waveTiming.parallel = true
 		coinbaseBase := new(uint256.Int).Set(statedb.GetBalance(header.Coinbase))
 		coinbaseFinal := new(uint256.Int).Set(coinbaseBase)
 		txForks := make([]*state.StateDB, n)
 		var wg sync.WaitGroup
 		var errMu sync.Mutex
 		var firstErr error
-		for _, i := range sortedIdx {
+		var messageSum, cloneSum, setupSum, execSum atomic.Int64
+		concurrentStart := time.Now()
+		for _, idx := range sortedIdx {
 			wg.Add(1)
+			i := idx
 			go func() {
 				defer wg.Done()
 				tx := txs[i]
+				messageStart := time.Now()
 				msg, err := TransactionToMessage(tx, signer, header.BaseFee)
+				messageSum.Add(int64(time.Since(messageStart)))
 				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
@@ -159,16 +195,23 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 					errMu.Unlock()
 					return
 				}
-				child := statedb.Copy()
-				child.SetDeferTrieFlush(true)
+				cloneStart := time.Now()
+				child := statedb.CopyForParallelTx()
+				cloneSum.Add(int64(time.Since(cloneStart)))
+
+				setupStart := time.Now()
 				var parallelStateDB vm.StateDB = child
 				if hooks := cfg.Tracer; hooks != nil {
 					parallelStateDB = state.NewHookedState(child, hooks)
 				}
 				parallelEVM := vm.NewEVM(context, parallelStateDB, p.config, cfg)
 				child.SetTxContext(tx.Hash(), i)
+				setupSum.Add(int64(time.Since(setupStart)))
+
+				execStart := time.Now()
 				var txGasUsed uint64
 				receipt, err := ApplyTransactionWithEVM(msg, gp, child, blockNumber, blockHash, context.Time, tx, &txGasUsed, parallelEVM)
+				execSum.Add(int64(time.Since(execStart)))
 				if err != nil {
 					errMu.Lock()
 					if firstErr == nil {
@@ -182,9 +225,15 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			}()
 		}
 		wg.Wait()
+		waveTiming.concurrentWall = time.Since(concurrentStart)
+		waveTiming.messageSum = time.Duration(messageSum.Load())
+		waveTiming.cloneSum = time.Duration(cloneSum.Load())
+		waveTiming.setupSum = time.Duration(setupSum.Load())
+		waveTiming.execSum = time.Duration(execSum.Load())
 		if firstErr != nil {
 			return nil, firstErr
 		}
+		mergeStart := time.Now()
 		for _, i := range sortedIdx {
 			childCoinbase := txForks[i].GetBalance(header.Coinbase)
 			if childCoinbase.Cmp(coinbaseBase) >= 0 {
@@ -200,11 +249,17 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		if err := statedb.Error(); err != nil {
 			return nil, err
 		}
-		fmt.Printf("finished transaction execution group %d (tx indices, concurrent in-wave): %v\n", groupIdx, sortedIdx)
+		waveTiming.mergeWall = time.Since(mergeStart)
+		if ParallelTxDebug {
+			fmt.Printf("finished transaction execution group %d (tx indices, concurrent in-wave): %v\n", groupIdx, sortedIdx)
+		}
+		if ParallelTxTiming {
+			waveTiming.wall = time.Since(waveStart)
+			waveTimings = append(waveTimings, waveTiming)
+		}
 	}
-	fmt.Printf("transaction wave dispatch total time: %v (parallelWave=%v, groups=%d, txs=%d)\n",
-		time.Since(txWaveExecStart), ParallelTxWaveExecution, len(groups), n)
 
+	finalStart := time.Now()
 	normalizeReceiptCumulativeGas(receipts)
 	if n > 0 {
 		*usedGas = receipts[n-1].CumulativeGasUsed
@@ -232,6 +287,16 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.chain.engine.Finalize(p.chain, header, tracingStateDB, block.Body())
+	if ParallelTxTiming && n > 0 {
+		recordProcessWallTiming(processTimingRecord{
+			grouping:     groupingWall,
+			waves:        waveTimings,
+			finalization: time.Since(finalStart),
+			txCount:      n,
+			groupCount:   len(groups),
+			parallel:     ParallelTxGroupingByStorageOverlap && ParallelTxWaveExecution,
+		})
+	}
 
 	return &ProcessResult{
 		Receipts: receipts,
@@ -239,6 +304,167 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		Logs:     allLogs,
 		GasUsed:  *usedGas,
 	}, nil
+}
+
+type wavePhaseTiming struct {
+	txCount        int
+	wall           time.Duration
+	concurrentWall time.Duration // wall for parallel goroutine phase
+	messageSum     time.Duration // TransactionToMessage, summed across txs
+	cloneSum       time.Duration // StateDB.CopyForParallelTx, summed across txs
+	setupSum       time.Duration // child state and EVM setup, summed across txs
+	execSum        time.Duration // per-tx EVM execution, summed across txs
+	mergeWall      time.Duration // wall for sequential merge phase
+	parallel       bool
+}
+
+type processTimingRecord struct {
+	grouping     time.Duration
+	waves        []wavePhaseTiming
+	finalization time.Duration
+	txCount      int
+	groupCount   int
+	parallel     bool
+}
+
+var (
+	processTimingMu      sync.Mutex
+	processTimingRecords []processTimingRecord
+)
+
+func recordProcessWallTiming(record processTimingRecord) {
+	processTimingMu.Lock()
+	processTimingRecords = append(processTimingRecords, record)
+	processTimingMu.Unlock()
+}
+
+// ClearParallelTxTimings discards all buffered timing diagnostics.
+func ClearParallelTxTimings() {
+	processTimingMu.Lock()
+	processTimingRecords = nil
+	processTimingMu.Unlock()
+}
+
+// PrintAndClearParallelTxTimings prints buffered diagnostics outside measured execution.
+func PrintAndClearParallelTxTimings() {
+	processTimingMu.Lock()
+	records := processTimingRecords
+	processTimingRecords = nil
+	processTimingMu.Unlock()
+
+	for i, record := range records {
+		mode := "sequential"
+		if record.parallel {
+			mode = "parallel"
+		}
+		fmt.Printf("\nprocess timing sample %d mode=%s\n", i+1, mode)
+		printProcessWallTiming(record)
+	}
+}
+
+func printProcessWallTiming(record processTimingRecord) {
+	grouping := record.grouping
+	waves := record.waves
+	finalization := record.finalization
+	txCount := record.txCount
+	groupCount := record.groupCount
+	var waveTotal, waveMin, waveMax time.Duration
+	var (
+		parallelTxs, parallelWaveCount                  int
+		messageSum, cloneSum, setupSum, execSum, mergeSum time.Duration
+		concurrentWallSum                               time.Duration
+		seqTxs                                          int
+		seqMessageSum, seqSetupSum, seqExecSum           time.Duration
+	)
+	for i, wave := range waves {
+		waveTotal += wave.wall
+		if i == 0 || wave.wall < waveMin {
+			waveMin = wave.wall
+		}
+		if wave.wall > waveMax {
+			waveMax = wave.wall
+		}
+		if wave.parallel {
+			parallelTxs += wave.txCount
+			parallelWaveCount++
+			messageSum += wave.messageSum
+			cloneSum += wave.cloneSum
+			setupSum += wave.setupSum
+			execSum += wave.execSum
+			mergeSum += wave.mergeWall
+			concurrentWallSum += wave.concurrentWall
+		} else {
+			seqTxs += wave.txCount
+			seqMessageSum += wave.messageSum
+			seqSetupSum += wave.setupSum
+			seqExecSum += wave.execSum
+		}
+	}
+
+	total := grouping + waveTotal + finalization
+	fmt.Printf("process wall timing: grouping=%v waves=%v finalization=%v total=%v (txs=%d groups=%d)\n",
+		grouping, waveTotal, finalization, total, txCount, groupCount)
+
+	if txCount == 0 {
+		return
+	}
+
+	if parallelTxs > 0 {
+		fmt.Printf("  parallel wave phases (sum across txs, avg per parallel tx):\n")
+		fmt.Printf("    message conversion: sum=%v avg=%v\n", messageSum, avgDuration(messageSum, parallelTxs))
+		fmt.Printf("    state clone:        sum=%v avg=%v\n", cloneSum, avgDuration(cloneSum, parallelTxs))
+		fmt.Printf("    EVM/state setup:    sum=%v avg=%v\n", setupSum, avgDuration(setupSum, parallelTxs))
+		fmt.Printf("    execute:           sum=%v avg=%v\n", execSum, avgDuration(execSum, parallelTxs))
+		fmt.Printf("    merge(finalize):   sum=%v avg=%v\n", mergeSum, avgDuration(mergeSum, parallelTxs))
+		fmt.Printf("    concurrent wall:   sum=%v avg=%v per parallel wave (parallel span, not CPU)\n",
+			concurrentWallSum, avgDuration(concurrentWallSum, parallelWaveCount))
+	}
+	if seqTxs > 0 {
+		fmt.Printf("  sequential in-wave txs=%d message_sum=%v avg=%v setup_sum=%v avg=%v exec_sum=%v avg=%v\n",
+			seqTxs,
+			seqMessageSum, avgDuration(seqMessageSum, seqTxs),
+			seqSetupSum, avgDuration(seqSetupSum, seqTxs),
+			seqExecSum, avgDuration(seqExecSum, seqTxs))
+	}
+
+	const maxListed = 16
+	if len(waves) == 0 {
+		return
+	}
+	if len(waves) <= maxListed {
+		for i, wave := range waves {
+			printWavePhaseTiming(i, wave)
+		}
+		return
+	}
+
+	avg := waveTotal / time.Duration(len(waves))
+	fmt.Printf("  waves: count=%d min=%v max=%v avg=%v\n", len(waves), waveMin, waveMax, avg)
+}
+
+func printWavePhaseTiming(idx int, wave wavePhaseTiming) {
+	if wave.parallel {
+		fmt.Printf("  wave %d (%d txs, parallel): wall=%v concurrent_wall=%v message_sum=%v (avg/t=%v) clone_sum=%v (avg/t=%v) setup_sum=%v (avg/t=%v) exec_sum=%v (avg/t=%v) merge=%v (avg/t=%v)\n",
+			idx, wave.txCount, wave.wall, wave.concurrentWall,
+			wave.messageSum, avgDuration(wave.messageSum, wave.txCount),
+			wave.cloneSum, avgDuration(wave.cloneSum, wave.txCount),
+			wave.setupSum, avgDuration(wave.setupSum, wave.txCount),
+			wave.execSum, avgDuration(wave.execSum, wave.txCount),
+			wave.mergeWall, avgDuration(wave.mergeWall, wave.txCount))
+		return
+	}
+	fmt.Printf("  wave %d (%d txs, sequential): wall=%v message_sum=%v (avg/t=%v) setup_sum=%v (avg/t=%v) exec_sum=%v (avg/t=%v)\n",
+		idx, wave.txCount, wave.wall,
+		wave.messageSum, avgDuration(wave.messageSum, wave.txCount),
+		wave.setupSum, avgDuration(wave.setupSum, wave.txCount),
+		wave.execSum, avgDuration(wave.execSum, wave.txCount))
+}
+
+func avgDuration(total time.Duration, count int) time.Duration {
+	if count == 0 {
+		return 0
+	}
+	return total / time.Duration(count)
 }
 
 // ApplyTransactionWithEVM attempts to apply a transaction to the given state database

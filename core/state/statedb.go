@@ -734,6 +734,45 @@ func (s *StateDB) Copy() *StateDB {
 	return state
 }
 
+// CopyForParallelTx creates a lightweight StateDB fork for one parallel transaction.
+// Unlike Copy, it starts with empty logs, preimages, journal, access list and
+// transient storage (valid at a transaction boundary), and skips copying the
+// account trie (unused while deferTrieFlush is set). Cached state objects and
+// mutations are still deep-copied so each fork is isolated.
+func (s *StateDB) CopyForParallelTx() *StateDB {
+	state := &StateDB{
+		db:                   s.db,
+		reader:               s.reader,
+		originalRoot:         s.originalRoot,
+		deferTrieFlush:       true,
+		stateObjects:         make(map[common.Address]*stateObject, len(s.stateObjects)),
+		stateObjectsDestruct: make(map[common.Address]*stateObject, len(s.stateObjectsDestruct)),
+		mutations:            make(map[common.Address]*mutation, len(s.mutations)),
+		dbErr:                s.dbErr,
+		logs:                 make(map[common.Hash][]*types.Log),
+		preimages:            make(map[common.Hash][]byte),
+		accessList:           newAccessList(),
+		transientStorage:     newTransientStorage(),
+		journal:              newJournal(),
+	}
+	if s.witness != nil {
+		state.witness = s.witness.Copy()
+	}
+	if s.accessEvents != nil {
+		state.accessEvents = s.accessEvents.Copy()
+	}
+	for addr, obj := range s.stateObjects {
+		state.stateObjects[addr] = obj.deepCopy(state)
+	}
+	for addr, obj := range s.stateObjectsDestruct {
+		state.stateObjectsDestruct[addr] = obj.deepCopy(state)
+	}
+	for addr, op := range s.mutations {
+		state.mutations[addr] = op.copy()
+	}
+	return state
+}
+
 // SetDeferTrieFlush enables deferred trie flushing for parallel fork instances.
 // The canonical StateDB must never have this set when Commit is expected to persist.
 func (s *StateDB) SetDeferTrieFlush(v bool) {
@@ -741,8 +780,8 @@ func (s *StateDB) SetDeferTrieFlush(v bool) {
 }
 
 // MergeParallelChildInto merges one transaction's effects from child onto parent.
-// Child should be a Copy() of the same pre-wave state, executed with
-// SetDeferTrieFlush(true). Log indices are reassigned to follow parent.logSize.
+// Child should be a CopyForParallelTx() (or Copy()) of the same pre-wave state,
+// executed with SetDeferTrieFlush(true). Log indices are reassigned to follow parent.logSize.
 func (s *StateDB) MergeParallelChildInto(child *StateDB, txHash common.Hash) {
 	if child.dbErr != nil {
 		s.setError(child.dbErr)

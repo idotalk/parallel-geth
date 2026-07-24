@@ -1958,7 +1958,11 @@ func (bc *BlockChain) processBlock(parentRoot common.Hash, block *types.Block, s
 	)
 	defer interrupt.Store(true) // terminate the prefetch at the end
 
-	if bc.cfg.NoPrefetch {
+	// Skip block-level state prefetch on the parallel execution path. Parallel
+	// waves already saturate cores with per-tx StateDB copies; the speculative
+	// prefetcher only adds contention. Sequential mode keeps normal geth behavior.
+	noPrefetch := bc.cfg.NoPrefetch || (ParallelTxGroupingByStorageOverlap && ParallelTxWaveExecution)
+	if noPrefetch {
 		statedb, err = state.New(parentRoot, bc.statedb)
 		if err != nil {
 			return nil, err

@@ -26,9 +26,17 @@ var ParallelTxGroupingByStorageOverlap = true
 // ParallelTxWaveExecution runs txs in the same wave concurrently when true: one
 // goroutine and one vm.EVM per tx. StateDB, GasPool, and any tracers must be safe
 // for concurrent use (or txs must be disjoint and externally synchronized).
-// When false (default), txs in a wave still run strictly in ascending index order
+// When false, txs in a wave still run strictly in ascending index order
 // on the shared EVM — consensus-compatible with sequential Ethereum execution.
 var ParallelTxWaveExecution = true
 
+// ParallelTxDirectExecutionMaxWaveSize is the largest wave that executes
+// directly on the shared StateDB, avoiding per-transaction state copies,
+// goroutines, child EVMs, and merging. The default optimizes singleton waves.
+var ParallelTxDirectExecutionMaxWaveSize = 4
+
 // ParallelTxDebug enables debug logging for parallel transaction execution.
 var ParallelTxDebug = false
+
+// ParallelTxTiming prints coarse wall-clock timings at the end of Process.
+var ParallelTxTiming = false
