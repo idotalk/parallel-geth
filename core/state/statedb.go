@@ -143,8 +143,9 @@ type StateDB struct {
 	// merges children then performs real trie work at block boundaries.
 	deferTrieFlush bool
 
-	// parallelMergeAddrs lists addresses touched in the last Finalise when
-	// deferTrieFlush is set (journal dirties before reset). Populated only for forks.
+	// parallelMergeAddrs lists addresses touched across Finalise calls when
+	// deferTrieFlush is set (journal dirties before reset). Accumulates so a
+	// reused parallel fork can merge every tx it executed. Forks only.
 	parallelMergeAddrs []common.Address
 
 	// Measurements gathered during execution for debugging purposes
@@ -779,13 +780,17 @@ func (s *StateDB) SetDeferTrieFlush(v bool) {
 	s.deferTrieFlush = v
 }
 
-// MergeParallelChildInto merges one transaction's effects from child onto parent.
-// Child should be a CopyForParallelTx() (or Copy()) of the same pre-wave state,
-// executed with SetDeferTrieFlush(true). Log indices are reassigned to follow parent.logSize.
+// MergeParallelChildInto merges one transaction's logs and the child's account
+// mutations onto parent. Prefer MergeParallelChildLogs (in tx order) +
+// MergeParallelChildAccounts (once per reused fork) for worker-pooled waves.
 func (s *StateDB) MergeParallelChildInto(child *StateDB, txHash common.Hash) {
-	if child.dbErr != nil {
-		s.setError(child.dbErr)
-	}
+	s.MergeParallelChildLogs(child, txHash)
+	s.MergeParallelChildAccounts(child)
+}
+
+// MergeParallelChildLogs copies logs for txHash from child onto parent, reassigning
+// log indices to follow parent.logSize.
+func (s *StateDB) MergeParallelChildLogs(child *StateDB, txHash common.Hash) {
 	if logs := child.logs[txHash]; len(logs) > 0 {
 		cpy := make([]*types.Log, len(logs))
 		for i, l := range logs {
@@ -796,6 +801,15 @@ func (s *StateDB) MergeParallelChildInto(child *StateDB, txHash common.Hash) {
 		}
 		s.logs[txHash] = cpy
 	}
+}
+
+// MergeParallelChildAccounts merges account mutations / preimages / access events
+// / witness from a parallel fork onto parent. Call once per child fork even if
+// that fork executed multiple address-disjoint txs.
+func (s *StateDB) MergeParallelChildAccounts(child *StateDB) {
+	if child.dbErr != nil {
+		s.setError(child.dbErr)
+	}
 	for h, data := range child.preimages {
 		s.preimages[h] = data
 	}
@@ -805,7 +819,12 @@ func (s *StateDB) MergeParallelChildInto(child *StateDB, txHash common.Hash) {
 	if s.witness != nil {
 		s.witness.Merge(child.witness)
 	}
+	seen := make(map[common.Address]struct{}, len(child.parallelMergeAddrs))
 	for _, addr := range child.parallelMergeAddrs {
+		if _, ok := seen[addr]; ok {
+			continue
+		}
+		seen[addr] = struct{}{}
 		if op, ok := child.mutations[addr]; ok && op.isDelete() {
 			delete(s.stateObjects, addr)
 			if dob, ok := child.stateObjectsDestruct[addr]; ok {
@@ -876,13 +895,11 @@ func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 		}
 	}
 	if s.deferTrieFlush && len(s.journal.dirties) > 0 {
-		s.parallelMergeAddrs = s.parallelMergeAddrs[:0]
+		// Accumulate across txs on a reused parallel fork (do not reset/sort;
+		// MergeParallelChildAccounts dedupes).
 		for addr := range s.journal.dirties {
 			s.parallelMergeAddrs = append(s.parallelMergeAddrs, addr)
 		}
-		slices.SortFunc(s.parallelMergeAddrs, func(a, b common.Address) int {
-			return a.Cmp(b)
-		})
 	}
 	// Invalidate journal because reverting across transactions is not allowed.
 	s.clearJournalAndRefund()

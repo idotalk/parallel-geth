@@ -15,7 +15,7 @@ from pathlib import Path
 # CONFIG
 # ---------------------------------------------------------------------------
 
-
+os.environ["BENCHMARK_MODE"] = "both"
 os.environ["GOMAXPROCS"] = "8"
 REPO_ROOT = Path(__file__).resolve().parent
 
@@ -23,7 +23,8 @@ REPO_ROOT = Path(__file__).resolve().parent
 BENCHMARK_JSON_INPUT_DIR = REPO_ROOT / "benchmarks" / "blocks" / "blocksdata"
 
 # Set to a filename like "25560699.json" to run only that file; leave "" for all .json files.
-JSON_FILE = "25560620.json"
+JSON_FILE = "25603091.json"
+# JSON_FILE = "25560699.json"
 
 BENCHMARK_OUTPUT_FILE_REAL_BLOCKS = REPO_ROOT / "benchmarks" / "results" / "_temp_real_blocks.log"
 
@@ -32,7 +33,7 @@ BENCHMARK_TIMEOUT = "30m"
 RUNS = 100
 
 # Empty uses the current Go flag. Use [3] for one value or list(range(9)) to sweep.
-DIRECT_EXECUTION_MAX_WAVE_SIZES: list[int] = [4]
+DIRECT_EXECUTION_MAX_WAVE_SIZES: list[int] = []
 
 # ---------------------------------------------------------------------------
 

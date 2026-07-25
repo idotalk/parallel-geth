@@ -1,3 +1,61 @@
 
 # ParallelTxDirectExecutionMaxWaveSize=4
 [2026-07-24][local][25560620.json][319_txs][100_runs] - Sequential: avg=0.032887s std=0.030900s, Parallel: avg=0.025110s std=0.014381s, Speedup: avg=1.277x std=0.694x
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+[2026-07-24][local][25560620.json][319_txs][100_runs] - Sequential: avg=0.035409s std=0.008526s, Parallel: avg=0.031198s std=0.006712s, Speedup: avg=1.140x std=0.173x
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+[2026-07-24][local][25560620.json][319_txs][100_runs] - Sequential: avg=0.022047s std=0.003544s, Parallel: avg=0.015282s std=0.003225s, Speedup: avg=1.518x std=0.479x
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+
+# ParallelTxDirectExecutionMaxWaveSize=4
+[2026-07-24][local][25603091.json][442_txs][1_runs][sequential] - avg=0.096416s std=0.000000s
+[2026-07-24][local][25560699.json][243_txs][100_runs] - Sequential: avg=0.018531s std=0.004731s, Parallel: avg=0.019851s std=0.004621s, Speedup: avg=0.943x std=0.169x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.000000s std=0.000000s, Parallel: avg=0.000000s std=0.000000s, Speedup: avg=NaNx std=NaNx
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.000000s std=0.000000s, Parallel: avg=0.000000s std=0.000000s, Speedup: avg=NaNx std=NaNx
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.057777s std=0.010921s, Parallel: avg=0.064544s std=0.012806s, Speedup: avg=0.907x std=0.141x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.053722s std=0.009608s, Parallel: avg=0.052115s std=0.008805s, Speedup: avg=1.038x std=0.136x
+[2026-07-24][local][25603091.json][442_txs][1_runs] - Sequential: avg=0.050366s std=0.000000s, Parallel: avg=0.651380s std=0.000000s, Speedup: avg=0.077x std=0.000x
+
+# ParallelTxDirectExecutionMaxWaveSize=1
+[2026-07-24][local][25603091.json][442_txs][1_runs] - Sequential: avg=0.053764s std=0.000000s, Parallel: avg=0.633062s std=0.000000s, Speedup: avg=0.085x std=0.000x
+
+# ParallelTxDirectExecutionMaxWaveSize=1
+[2026-07-24][local][25603091.json][442_txs][1_runs] - Sequential: avg=0.044117s std=0.000000s, Parallel: avg=0.060170s std=0.000000s, Speedup: avg=0.733x std=0.000x
+
+# ParallelTxDirectExecutionMaxWaveSize=1
+[2026-07-24][local][25603091.json][442_txs][1_runs][sequential] - avg=0.041453s std=0.000000s
+
+# ParallelTxDirectExecutionMaxWaveSize=1
+[2026-07-24][local][25603091.json][442_txs][1_runs][parallel] - avg=0.067042s std=0.000000s
+
+# ParallelTxDirectExecutionMaxWaveSize=1
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.049725s std=0.007857s, Parallel: avg=0.064043s std=0.010892s, Speedup: avg=0.787x std=0.116x
+
+# ParallelTxDirectExecutionMaxWaveSize=8
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.049161s std=0.007407s, Parallel: avg=0.042203s std=0.008101s, Speedup: avg=1.184x std=0.170x
+
+# ParallelTxDirectExecutionMaxWaveSize=16
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.065328s std=0.014541s, Parallel: avg=0.054664s std=0.010943s, Speedup: avg=1.206x std=0.194x
+
+# ParallelTxDirectExecutionMaxWaveSize=16
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.058752s std=0.012292s, Parallel: avg=0.043830s std=0.007586s, Speedup: avg=1.351x std=0.233x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.059959s std=0.010154s, Parallel: avg=0.046295s std=0.007711s, Speedup: avg=1.308x std=0.206x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.048280s std=0.008175s, Parallel: avg=0.050705s std=0.011115s, Speedup: avg=0.974x std=0.166x
+[2026-07-24][local][25603091.json][442_txs][100_runs][sequential] - avg=0.095607s std=0.010169s
+[2026-07-24][local][25603091.json][442_txs][100_runs][sequential] - avg=0.103876s std=0.017059s
+[2026-07-24][local][25603091.json][442_txs][100_runs][parallel] - avg=0.038158s std=0.008162s
+[2026-07-24][local][25603091.json][442_txs][100_runs][sequential] - avg=0.094724s std=0.007151s
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.048944s std=0.008373s, Parallel: avg=0.039604s std=0.008243s, Speedup: avg=1.263x std=0.220x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.051068s std=0.008857s, Parallel: avg=0.039326s std=0.007372s, Speedup: avg=1.321x std=0.231x
+[2026-07-24][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.050979s std=0.009560s, Parallel: avg=0.040856s std=0.009227s, Speedup: avg=1.273x std=0.220x
+[2026-07-25][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.041299s std=0.005305s, Parallel: avg=0.030438s std=0.004903s, Speedup: avg=1.387x std=0.271x
+[2026-07-25][local][25603091.json][442_txs][100_runs] - Sequential: avg=0.051588s std=0.008447s, Parallel: avg=0.038151s std=0.005370s, Speedup: avg=1.363x std=0.200x
+[2026-07-25][local][25560699.json][243_txs][100_runs] - Sequential: avg=0.010247s std=0.002905s, Parallel: avg=0.008342s std=0.002847s, Speedup: avg=NaNx std=NaNx
+[2026-07-25][local][25560699.json][243_txs][100_runs] - Sequential: avg=0.011772s std=0.002635s, Parallel: avg=0.011342s std=0.007715s, Speedup: avg=1.159x std=0.310x

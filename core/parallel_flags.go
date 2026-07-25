@@ -23,20 +23,27 @@ package core
 // wave. When false, each tx is its own group [[0],[1],...].
 var ParallelTxGroupingByStorageOverlap = true
 
-// ParallelTxWaveExecution runs txs in the same wave concurrently when true: one
-// goroutine and one vm.EVM per tx. StateDB, GasPool, and any tracers must be safe
-// for concurrent use (or txs must be disjoint and externally synchronized).
+// ParallelTxWaveExecution runs txs in the same wave concurrently when true.
+// Worker count is ParallelTxWorkers (each worker owns one reused StateDB fork).
 // When false, txs in a wave still run strictly in ascending index order
 // on the shared EVM — consensus-compatible with sequential Ethereum execution.
 var ParallelTxWaveExecution = true
 
+// ParallelTxWorkers is the max number of goroutines (and StateDB forks) inside a
+// parallel wave. Each worker clones once from the wave-parent StateDB and reuses
+// that dirty fork for later txs from the wave queue (safe under address-disjoint
+// packing). If <= 0, runtime.GOMAXPROCS(0) is used.
+var ParallelTxWorkers = 4
+
 // ParallelTxDirectExecutionMaxWaveSize is the largest wave that executes
 // directly on the shared StateDB, avoiding per-transaction state copies,
 // goroutines, child EVMs, and merging. The default optimizes singleton waves.
-var ParallelTxDirectExecutionMaxWaveSize = 4
+var ParallelTxDirectExecutionMaxWaveSize = 9
 
 // ParallelTxDebug enables debug logging for parallel transaction execution.
 var ParallelTxDebug = false
 
-// ParallelTxTiming prints coarse wall-clock timings at the end of Process.
+// ParallelTxTiming buffers Process() phase timings (and validate/write via
+// AttachPostProcessTiming). When PARALLEL_TX_TIMING_FILE is set from the bench,
+// samples are also appended as JSONL for Amdahl analysis.
 var ParallelTxTiming = false
