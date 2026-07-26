@@ -101,6 +101,7 @@ Writes `cpu_sequential.{out,txt}` and `cpu_parallel.{out,txt}` under `benchmarks
 ## Fetch real blocks
 
 Preferred (with parent `pre` alloc, optional access list generation):
+use `--help` for full flags info.
 
 ```powershell
 python .\benchmarks\blocks\fetch_block_with_prestate.py

@@ -29,9 +29,9 @@ from typing import Any
 
 RPC_URI = "https://docs-demo.quiknode.pro/"
 OUTPUT_DIR = Path(__file__).resolve().parent / "blocksdata"
-REQUEST_RETRIES = 4
-RETRY_BASE_SLEEP_S = 2.0
-MIN_REQUEST_INTERVAL_S = 0.3
+REQUEST_RETRIES = 6
+RETRY_BASE_SLEEP_S = 3.0
+MIN_REQUEST_INTERVAL_S = 0.4
 
 # ---------------------------------------------------------------------------
 
@@ -71,8 +71,15 @@ def _post_json(payload: Any, timeout: float = 600) -> Any:
                 return json.loads(resp.read().decode())
         except _TRANSIENT as err:
             last_err = err
-            sleep_s = RETRY_BASE_SLEEP_S * (2**attempt)
+            # Longer sleep if 429 rate limited
+            is_429 = isinstance(err, urllib.error.HTTPError) and err.code == 429
+            factor = 3.0 if is_429 else 2.0
+            sleep_s = RETRY_BASE_SLEEP_S * (factor**attempt)
             print(f"  RPC retry {attempt + 1}/{REQUEST_RETRIES} after {err!r}; sleep {sleep_s:.1f}s")
+            if is_429 and getattr(err, "headers", None):
+                headers_fmt = "\n".join(f"    {line}" for line in str(err.headers).splitlines() if line)
+                if headers_fmt:
+                    print(f"  Response headers:\n{headers_fmt}")
             time.sleep(sleep_s)
     assert last_err is not None
     raise last_err
@@ -250,29 +257,31 @@ def header_from_block(block: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in header.items() if v is not None}
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--block", default="latest", help='Decimal, hex, or "latest"')
-    parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
-    parser.add_argument(
-        "--create-al",
-        action="store_true",
-        help="Generate access list per transaction via eth_createAccessList",
-    )
-    args = parser.parse_args()
+def fetch_single_block(block_tag: str, out_dir: Path, create_al: bool = False, force: bool = False) -> bool:
+    if block_tag.startswith("0x"):
+        block_num_str = str(hex_to_int(block_tag))
+    elif block_tag.isdigit():
+        block_num_str = block_tag
+    else:
+        block_num_str = ""
 
-    block_tag = parse_block_arg(args.block)
-    print(f"Fetching block {block_tag} from {RPC_URI}")
+    if block_num_str:
+        existing = out_dir / f"{block_num_str}.json"
+        if existing.exists() and not force:
+            print(f"Block {block_num_str} already exists at {existing.name}, skipping.")
+            return True
+
+    print(f"\n--- Fetching block {block_tag} from {RPC_URI} ---")
     block = rpc("eth_getBlockByNumber", [block_tag, True])
     if not block:
-        print("Block not found", file=sys.stderr)
-        return 1
+        print(f"Block {block_tag} not found", file=sys.stderr)
+        return False
 
     block_num = hex_to_int(block["number"])
     txs = block["transactions"]
     print(f"Block {block_num}: {len(txs)} transactions")
 
-    if args.create_al:
+    if create_al:
         print("Generating access list per transaction (eth_createAccessList)...")
         for i, tx in enumerate(txs):
             tx["generatedAccessList"] = fetch_access_list(tx, block["number"])
@@ -288,7 +297,7 @@ def main() -> int:
     )
     if not isinstance(traces, list) or not traces:
         print(f"Unexpected trace result: {type(traces).__name__}", file=sys.stderr)
-        return 1
+        return False
     pre = merge_prestate(traces)
     print(f"  merged prestate from {len(traces)} tx traces")
 
@@ -314,8 +323,8 @@ def main() -> int:
         }
     }
 
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = args.out_dir / f"{block_num}.json"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{block_num}.json"
     out_path.write_text(json.dumps(payload, indent=4), encoding="utf-8")
 
     code_accounts = sum(1 for a in pre.values() if a.get("code"))
@@ -325,7 +334,43 @@ def main() -> int:
         f"pre: {len(pre)} accounts, {code_accounts} with code, {slot_count} slots; "
         f"txs={len(formatted_txs)} types={dict(sorted(type_counts.items()))}"
     )
-    return 0
+    return True
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--block", default=None, help='Single block: Decimal, hex, or "latest"')
+    parser.add_argument("--start-block", type=int, default=None, help="Start block decimal number")
+    parser.add_argument("--end-block", type=int, default=None, help="End block decimal number (inclusive)")
+    parser.add_argument("--count", type=int, default=None, help="Number of blocks to fetch starting from start-block")
+    parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument(
+        "--create-al",
+        action="store_true",
+        help="Generate access list per transaction via eth_createAccessList",
+    )
+    args = parser.parse_args()
+
+    if args.start_block is not None or args.count is not None or args.end_block is not None:
+        start = args.start_block if args.start_block is not None else 25603092
+        if args.end_block is not None:
+            count = args.end_block - start + 1
+        elif args.count is not None:
+            count = args.count
+        else:
+            count = 1
+        block_tags = [hex(start + i) for i in range(count)]
+    else:
+        block_tag = parse_block_arg(args.block or "latest")
+        block_tags = [block_tag]
+
+    success = 0
+    for tag in block_tags:
+        if fetch_single_block(tag, args.out_dir, create_al=args.create_al):
+            success += 1
+
+    print(f"\nSuccessfully fetched {success}/{len(block_tags)} blocks into {args.out_dir}")
+    return 0 if success == len(block_tags) else 1
 
 
 if __name__ == "__main__":
