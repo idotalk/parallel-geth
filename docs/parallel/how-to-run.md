@@ -80,11 +80,12 @@ Writes `cpu_sequential.{out,txt}` and `cpu_parallel.{out,txt}` under `benchmarks
 
 ## Fetch real blocks
 
-Preferred (with parent `pre` alloc):
+Preferred (with parent `pre` alloc, optional access list generation):
 
 ```powershell
 python .\benchmarks\blocks\fetch_block_with_prestate.py
 python .\benchmarks\blocks\fetch_block_with_prestate.py --block 25603091
+python .\benchmarks\blocks\fetch_block_with_prestate.py --block 25603091 --create-al
 ```
 
 Needs an RPC with `debug_traceBlockByNumber` + `prestateTracer` (`RPC_URI` at top of script). Writes `benchmarks/blocks/blocksdata/<n>.json`.
