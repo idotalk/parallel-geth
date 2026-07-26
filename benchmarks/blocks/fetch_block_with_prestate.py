@@ -118,6 +118,8 @@ def format_tx(tx: dict[str, Any]) -> dict[str, Any]:
         "s": tx["s"],
         "from": tx.get("from"),
     }
+    if tx.get("generatedAccessList") is not None:
+        formatted["generatedAccessList"] = tx["generatedAccessList"]
     if tx.get("gasPrice") is not None:
         formatted["gasPrice"] = tx["gasPrice"]
     if tx.get("maxFeePerGas") is not None:
@@ -177,6 +179,55 @@ def merge_prestate(traces: list[Any]) -> dict[str, Any]:
     return pre
 
 
+def merge_access_lists(orig_al: list[Any] | None, new_al: list[Any] | None) -> list[Any]:
+    """Merge original access list that returned from the debug node and newly created access list using the JSON-RPC eth_createaccesslist call,
+    appending new entries without overwriting."""
+    if not orig_al:
+        return new_al or []
+    if not new_al:
+        return orig_al or []
+
+    merged: dict[str, dict[str, Any]] = {}
+    for item in orig_al + new_al:
+        if not isinstance(item, dict) or "address" not in item:
+            continue
+        addr = normalize_addr(item["address"])
+        if addr not in merged:
+            merged[addr] = {
+                "address": item["address"],
+                "storageKeys": [],
+            }
+        existing_keys = merged[addr]["storageKeys"]
+        for key in item.get("storageKeys") or []:
+            norm_key = "0x" + key.lower().removeprefix("0x").zfill(64)
+            if norm_key not in existing_keys:
+                existing_keys.append(norm_key)
+
+    return list(merged.values())
+
+
+def fetch_access_list(tx: dict[str, Any], block_hex: str) -> list[Any]:
+    """Fetch computed access list per transaction using eth_createAccessList."""
+    tx_obj: dict[str, Any] = {
+        "from": tx["from"],
+        "data": tx.get("input") or tx.get("data") or "0x",
+    }
+    if tx.get("to"):
+        tx_obj["to"] = tx["to"]
+    if tx.get("value"):
+        tx_obj["value"] = tx["value"]
+    if tx.get("gas"):
+        tx_obj["gas"] = tx["gas"]
+
+    try:
+        res = rpc("eth_createAccessList", [tx_obj, block_hex])
+        if isinstance(res, dict) and "accessList" in res:
+            return res["accessList"]
+    except Exception:
+        pass
+    return tx.get("accessList") or []
+
+
 def header_from_block(block: dict[str, Any]) -> dict[str, Any]:
     header = {
         "baseFeePerGas": block.get("baseFeePerGas"),
@@ -203,6 +254,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--block", default="latest", help='Decimal, hex, or "latest"')
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument(
+        "--create-al",
+        action="store_true",
+        help="Generate access list per transaction via eth_createAccessList",
+    )
     args = parser.parse_args()
 
     block_tag = parse_block_arg(args.block)
@@ -215,6 +271,15 @@ def main() -> int:
     block_num = hex_to_int(block["number"])
     txs = block["transactions"]
     print(f"Block {block_num}: {len(txs)} transactions")
+
+    if args.create_al:
+        print("Generating access list per transaction (eth_createAccessList)...")
+        for i, tx in enumerate(txs):
+            tx["generatedAccessList"] = fetch_access_list(tx, block["number"])
+            if (i + 1) % 10 == 0 or (i + 1) == len(txs):
+                print(f"  Processed access lists: {i + 1}/{len(txs)}", end="\r", flush=True)
+        if txs:
+            print()
 
     print("Tracing prestate (debug_traceBlockByNumber + prestateTracer)...")
     traces = rpc(

@@ -104,7 +104,7 @@ func collectTransactionStorageSlotSets(txs []*types.Transaction) []map[storageAc
 	n := len(txs)
 	slotSets := make([]map[storageAccessPair]struct{}, n)
 	for i, tx := range txs {
-		acl := tx.AccessList()
+		acl := tx.WaveAccessList()
 		if acl == nil {
 			continue
 		}
@@ -123,21 +123,21 @@ func collectTransactionStorageSlotSets(txs []*types.Transaction) []map[storageAc
 
 // collectDeclaredAddressSets returns, per tx index, the set of declared
 // addresses: sender (from), recipient (to) if any, and every address listed in
-// the EIP-2930 access list (including address-only tuples).
+// the combined WaveAccessList (including address-only tuples).
 func collectDeclaredAddressSets(txs []*types.Transaction, signer types.Signer) ([]map[common.Address]struct{}, error) {
 	n := len(txs)
 	sets := make([]map[common.Address]struct{}, n)
 	for i, tx := range txs {
 		from, err := types.Sender(signer, tx)
 		if err != nil {
-			return nil, fmt.Errorf("tx %d: %w", i, err)
+			return nil, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
 		set := make(map[common.Address]struct{})
 		set[from] = struct{}{}
 		if to := tx.To(); to != nil {
 			set[*to] = struct{}{}
 		}
-		for _, tuple := range tx.AccessList() {
+		for _, tuple := range tx.WaveAccessList() {
 			set[tuple.Address] = struct{}{}
 		}
 		sets[i] = set
@@ -171,7 +171,7 @@ func normalizeReceiptCumulativeGas(receipts []*types.Receipt) {
 // Legacy transactions have no access list.
 func PrintTransactionAccessLists(txs []*types.Transaction) {
 	for i, tx := range txs {
-		acl := tx.AccessList()
+		acl := tx.WaveAccessList()
 		if acl == nil {
 			fmt.Printf("tx %d [%s]: no access list (legacy)\n", i, tx.Hash().Hex())
 			continue

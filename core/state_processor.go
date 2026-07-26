@@ -118,7 +118,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	groupingStart := time.Now()
 	groups, err := BuildTransactionStorageParallelGroups(txs, signer)
 	if err != nil {
-		return nil, fmt.Errorf("build tx parallel groups: %w", err)
+		return nil, err
 	}
 	if ParallelTxTiming {
 		groupingWall = time.Since(groupingStart)

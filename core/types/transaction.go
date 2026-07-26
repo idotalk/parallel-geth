@@ -60,6 +60,8 @@ type Transaction struct {
 	hash atomic.Pointer[common.Hash]
 	size atomic.Uint64
 	from atomic.Pointer[sigCache]
+
+	generatedAccessList AccessList // Benchmark/simulation access list for wave construction
 }
 
 // NewTx creates a new transaction.
@@ -289,6 +291,65 @@ func (tx *Transaction) Data() []byte { return tx.inner.data() }
 
 // AccessList returns the access list of the transaction.
 func (tx *Transaction) AccessList() AccessList { return tx.inner.accessList() }
+
+// SetGeneratedAccessList sets the RPC-generated access list used for benchmark/simulation wave scheduling.
+func (tx *Transaction) SetGeneratedAccessList(al AccessList) {
+	tx.generatedAccessList = al
+}
+
+// GeneratedAccessList returns the RPC-generated access list set for this transaction.
+func (tx *Transaction) GeneratedAccessList() AccessList {
+	return tx.generatedAccessList
+}
+
+// WaveAccessList returns the combined union of the protocol AccessList and GeneratedAccessList,
+// deduplicating addresses and storage keys. Used strictly by the wave scheduler.
+func (tx *Transaction) WaveAccessList() AccessList {
+	origAL := tx.AccessList()
+	genAL := tx.generatedAccessList
+	if len(genAL) == 0 {
+		return origAL
+	}
+	if len(origAL) == 0 {
+		return genAL
+	}
+
+	mergedMap := make(map[common.Address]map[common.Hash]struct{})
+	var addresses []common.Address
+
+	addTuple := func(tuple AccessTuple) {
+		slots, exists := mergedMap[tuple.Address]
+		if !exists {
+			slots = make(map[common.Hash]struct{})
+			mergedMap[tuple.Address] = slots
+			addresses = append(addresses, tuple.Address)
+		}
+		for _, key := range tuple.StorageKeys {
+			slots[key] = struct{}{}
+		}
+	}
+
+	for _, tuple := range origAL {
+		addTuple(tuple)
+	}
+	for _, tuple := range genAL {
+		addTuple(tuple)
+	}
+
+	res := make(AccessList, 0, len(addresses))
+	for _, addr := range addresses {
+		slotsMap := mergedMap[addr]
+		keys := make([]common.Hash, 0, len(slotsMap))
+		for k := range slotsMap {
+			keys = append(keys, k)
+		}
+		res = append(res, AccessTuple{
+			Address:     addr,
+			StorageKeys: keys,
+		})
+	}
+	return res
+}
 
 // Gas returns the gas limit of the transaction.
 func (tx *Transaction) Gas() uint64 { return tx.inner.gas() }

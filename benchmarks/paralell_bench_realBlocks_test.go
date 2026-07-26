@@ -52,6 +52,7 @@ type jsonTransaction struct {
 	Type                 *hexutil.Uint64              `json:"type"`
 	AccessList           types.AccessList             `json:"accessList"`
 	DeclaredAccessList   types.AccessList             `json:"declaredAccessList"`
+	GeneratedAccessList  types.AccessList             `json:"generatedAccessList"`
 	Data                 hexutil.Bytes                `json:"data"`
 	GasLimit             hexutil.Uint64               `json:"gasLimit"`
 	GasPrice             *hexutil.Big                 `json:"gasPrice"`
@@ -395,6 +396,10 @@ func parseTestJSONFile(path string, engine consensus.Engine) ([]*types.Block, *c
 		if err != nil {
 			dropped++
 			continue
+		}
+
+		if len(tx.GeneratedAccessList) > 0 {
+			signedTx.SetGeneratedAccessList(tx.GeneratedAccessList)
 		}
 
 		from, err := types.Sender(signer, signedTx)
