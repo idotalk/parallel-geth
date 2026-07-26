@@ -67,6 +67,26 @@ Runs the real-block bench with `PARALLEL_TX_TIMING=1` and writes JSONL to `bench
 
 ---
 
+## Hyperparameter optimization
+
+```powershell
+python .\optimize_hyperparams.py
+```
+
+Automates grid search over combinations of `ParallelTxWorkers` (default grid: `[4, 5, 6, 7, 8]`) and `ParallelTxDirectExecutionMaxWaveSize` (default grid: `[4, 5, 6, 7, 8, 9]`).
+
+**What it does:**
+- Rewrites `ParallelTxWorkers` and `ParallelTxDirectExecutionMaxWaveSize` in `core/parallel_flags.go` for each grid point.
+- Runs real-block benchmark iterations and analyzes performance via `run_amdahl_analysis.py --analyze-only`.
+- Ranks all tested configurations primarily by **Theoretical Speedup Cap** (`theoretical`), breaking ties with **Achieved Speedup** (`achieved`).
+- Automatically updates `core/parallel_flags.go` with the best configuration found upon completion.
+
+**What it generates:**
+- `benchmarks/results/hyperopt_results.json`: Incrementally updated JSON file containing metrics for all evaluated configurations (theoretical cap, achieved speedup, parallel tax ms, wave efficiency, execution time, etc.).
+- `core/parallel_flags.go`: Applied best hyperparameter flags.
+
+---
+
 ## CPU profiling
 
 ```powershell
