@@ -199,6 +199,11 @@ def analyze(samples: list[dict], plot_path: Path = WAVE_EFFICIENCY_PLOT) -> None
     theoretical = t_seq / t_ideal if t_ideal else float("nan")
     t_no_tax = shared_par + ideal_work
     theoretical_no_tax = t_seq / t_no_tax if t_no_tax else float("nan")
+    ideal_single_wave = makespan_lb(avg_tx_ns, workers)
+    t_single_wave = serial_par + ideal_single_wave
+    theoretical_single_wave = t_seq / t_single_wave if t_single_wave else float("nan")
+    t_no_shared = tax_par + ideal_work
+    theoretical_no_shared = t_seq / t_no_shared if t_no_shared else float("nan")
 
     print(f"samples paired: {n}  txs: {tx_count}  workers: {workers}")
     print()
@@ -226,12 +231,18 @@ def analyze(samples: list[dict], plot_path: Path = WAVE_EFFICIENCY_PLOT) -> None
     print(f"  work efficiency (work_seq/ideal)    = {s_work:.3f}x  (cap from packing+uneven txs)")
     print(f"  theoretical (serial_par + ideal)    = {theoretical:.3f}x")
     print(f"  theoretical if parallel_tax→0       = {theoretical_no_tax:.3f}x")
+    print(f"  theoretical if all txs in one wave = {theoretical_single_wave:.3f}x")
+    print(f"  theoretical if inherent serial→0    = {theoretical_no_shared:.3f}x")
     print()
     print("=== headroom ===")
     if math.isfinite(theoretical) and achieved > 0:
         print(f"  vs theoretical:           {(theoretical/achieved - 1)*100:.1f}% more possible (eff + same serial_par)")
     if math.isfinite(theoretical_no_tax) and achieved > 0:
         print(f"  vs no-tax ceiling:        {(theoretical_no_tax/achieved - 1)*100:.1f}% more possible")
+    if math.isfinite(theoretical_single_wave) and achieved > 0:
+        print(f"  vs single-wave ceiling:   {(theoretical_single_wave/achieved - 1)*100:.1f}% more possible")
+    if math.isfinite(theoretical_no_shared) and achieved > 0:
+        print(f"  vs no-inherent-serial:    {(theoretical_no_shared/achieved - 1)*100:.1f}% more possible")
     print()
     print(f"=== wave size histogram (avg count per parallel sample, n={n}) ===")
     for size in sorted(hist):

@@ -33,7 +33,7 @@ var ParallelTxWaveExecution = true
 // parallel wave. Each worker clones once from the wave-parent StateDB and reuses
 // that dirty fork for later txs from the wave queue (safe under address-disjoint
 // packing). If <= 0, runtime.GOMAXPROCS(0) is used.
-var ParallelTxWorkers = 6
+var ParallelTxWorkers = 4
 
 // ParallelTxDirectExecutionMaxWaveSize is the largest wave that executes
 // directly on the shared StateDB, avoiding per-transaction state copies,

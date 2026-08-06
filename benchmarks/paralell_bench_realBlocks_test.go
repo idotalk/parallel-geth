@@ -94,7 +94,7 @@ var benchChainConfig = &params.ChainConfig{
 	DepositContractAddress:  params.MainnetChainConfig.DepositContractAddress,
 	BlobScheduleConfig: &params.BlobScheduleConfig{
 		Cancun: params.DefaultCancunBlobConfig,
-		Prague: params.DefaultPragueBlobConfig,
+		Prague: &params.BlobConfig{Target: 6, Max: 13, UpdateFraction: 5007716},
 	},
 }
 
