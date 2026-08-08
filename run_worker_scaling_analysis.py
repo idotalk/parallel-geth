@@ -14,10 +14,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-try:
-    import pandas as pd
-except ImportError:
-    sys.exit("pandas is required: python -m pip install pandas")
+import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parent
@@ -27,22 +24,27 @@ RAW_DIR = RESULTS_DIR / "worker_scaling_raw"
 BY_BLOCK_CSV = RESULTS_DIR / "worker_scaling_by_block.csv"
 SUMMARY_CSV = RESULTS_DIR / "worker_scaling_summary.csv"
 
-WORKERS = (6,)
+WORKERS = (2, 4, 6, 8)
 GOMAXPROCS = 12
 RUNS = 100
 BENCHMARK_TIMEOUT = "30m"
 BRANCH_NAME = "worker-scaling"
 
-METRICS = ("speedup", "achieved", "theoretical", "theoretical_no_tax")
+METRICS = (
+    "speedup",
+    "achieved",
+    "theoretical",
+    "theoretical_no_tax",
+    "theoretical_no_dep",
+    "theoretical_no_serial",
+)
 SPEEDUP_RE = re.compile(r"Speedup: avg=([0-9.eE+-]+)x std=([0-9.eE+-]+)x")
 WORKER_FLAG_RE = re.compile(r"var ParallelTxWorkers = \d+")
 
 
-def mean_std(values: list[float]) -> tuple[float, float]:
+def finite_mean(values: list[float]) -> float:
     clean = [value for value in values if math.isfinite(value)]
-    if not clean:
-        return math.nan, math.nan
-    return statistics.mean(clean), statistics.stdev(clean) if len(clean) > 1 else 0.0
+    return statistics.mean(clean) if clean else math.nan
 
 
 def makespan_lower_bound(costs: list[int], workers: int) -> int:
@@ -54,7 +56,7 @@ def load_jsonl(path: Path) -> list[dict]:
         return [json.loads(line) for line in source if line.strip()]
 
 
-def amdahl_sample_metrics(samples: list[dict], expected_workers: int) -> dict[str, tuple[float, float]]:
+def amdahl_sample_metrics(samples: list[dict], expected_workers: int) -> dict[str, float]:
     seq = [sample for sample in samples if sample.get("mode") == "sequential"]
     par = [sample for sample in samples if sample.get("mode") == "parallel"]
     if len(seq) != len(par) or not seq:
@@ -71,6 +73,8 @@ def amdahl_sample_metrics(samples: list[dict], expected_workers: int) -> dict[st
     achieved: list[float] = []
     theoretical: list[float] = []
     theoretical_no_tax: list[float] = []
+    theoretical_no_dep: list[float] = []
+    theoretical_no_serial: list[float] = []
     for sequential, parallel in zip(seq, par):
         shared_seq = sum(float(sequential.get(key, 0)) for key in ("finalization_ns", "validate_ns", "write_ns"))
         # A failed parallel insertion has no meaningful post-Process timings.
@@ -92,43 +96,46 @@ def amdahl_sample_metrics(samples: list[dict], expected_workers: int) -> dict[st
             makespan_lower_bound([avg_tx_ns[i] for i in wave["txs"]], expected_workers)
             for wave in parallel["waves"]
         )
+        ideal_single_wave = makespan_lower_bound(avg_tx_ns, expected_workers)
+        parallel_tax = float(parallel.get("grouping_ns", 0)) + float(parallel.get("merge_ns", 0))
         achieved.append(seq_total / par_total if par_total else math.nan)
         theoretical.append(seq_total / (serial_par + ideal_work) if serial_par + ideal_work else math.nan)
         theoretical_no_tax.append(seq_total / (shared_par + ideal_work) if shared_par + ideal_work else math.nan)
+        theoretical_no_dep.append(
+            seq_total / (serial_par + ideal_single_wave) if serial_par + ideal_single_wave else math.nan
+        )
+        theoretical_no_serial.append(
+            seq_total / (parallel_tax + ideal_work) if parallel_tax + ideal_work else math.nan
+        )
 
     return {
-        "achieved": mean_std(achieved),
-        "theoretical": mean_std(theoretical),
-        "theoretical_no_tax": mean_std(theoretical_no_tax),
+        "achieved": finite_mean(achieved),
+        "theoretical": finite_mean(theoretical),
+        "theoretical_no_tax": finite_mean(theoretical_no_tax),
+        "theoretical_no_dep": finite_mean(theoretical_no_dep),
+        "theoretical_no_serial": finite_mean(theoretical_no_serial),
     }
 
 
-def parse_speedup(log_path: Path) -> tuple[float, float]:
+def parse_speedup(log_path: Path) -> float:
     matches = SPEEDUP_RE.findall(log_path.read_text(encoding="utf-8"))
     if len(matches) != 1:
         raise RuntimeError(f"expected one speedup summary in {log_path}, found {len(matches)}")
-    return tuple(map(float, matches[0]))  # type: ignore[return-value]
+    return float(matches[0][0])
 
 
 def save_tables(rows: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
     by_block = pd.DataFrame(rows).sort_values(["workers", "block"]).reset_index(drop=True)
     by_block.to_csv(BY_BLOCK_CSV, index=False)
 
-    mean_columns = [f"{metric}_mean" for metric in METRICS]
-    summary = by_block.groupby("workers", as_index=False)[mean_columns].mean()
-    summary.columns = ["workers", *METRICS]
+    summary = by_block.groupby("workers", as_index=False)[list(METRICS)].mean()
     summary.to_csv(SUMMARY_CSV, index=False)
     return by_block, summary
 
 
 def print_tables(by_block: pd.DataFrame, summary: pd.DataFrame) -> None:
-    printable = by_block[["workers", "block"]].copy()
-    for metric in METRICS:
-        printable[metric] = by_block.apply(
-            lambda row: f"{row[f'{metric}_mean']:.3f} ± {row[f'{metric}_std']:.3f}", axis=1
-        )
-    print("\nPer block (sample mean ± std):")
-    print(printable.to_string(index=False))
+    print("\nPer block:")
+    print(by_block.to_string(index=False, float_format=lambda value: f"{value:.3f}"))
     print("\nAverage across blocks:")
     print(summary.to_string(index=False, float_format=lambda value: f"{value:.3f}"))
 
@@ -177,7 +184,7 @@ def run_one(block: Path, workers: int) -> dict:
     metrics["speedup"] = speedup
     row: dict[str, float | int | str] = {"workers": workers, "block": block.name}
     for metric in METRICS:
-        row[f"{metric}_mean"], row[f"{metric}_std"] = metrics[metric]
+        row[metric] = metrics[metric]
     return row
 
 
