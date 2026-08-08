@@ -17,11 +17,14 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -105,8 +108,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// --- Fork: waves from BuildTransactionStorageParallelGroups (address-disjoint).
 	// Waves run sequentially on the live StateDB. Within a wave:
 	// - ParallelTxWaveExecution false: apply txs in ascending index order (canonical).
-	// - ParallelTxWaveExecution true: invoke ApplyTransactionWithEVM concurrently
-	//   (one vm.EVM per tx); completion order is undefined — receipts are stored by index.
+	// - ParallelTxWaveExecution true: ParallelTxWorkers goroutines each clone once
+	//   and reuse that dirty fork for queued wave txs; receipts stored by index.
 	txs := block.Transactions()
 	n := len(txs)
 	receipts = make([]*types.Receipt, n)
@@ -115,40 +118,41 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	groupingStart := time.Now()
 	groups, err := BuildTransactionStorageParallelGroups(txs, signer)
 	if err != nil {
-		return nil, fmt.Errorf("build tx parallel groups: %w", err)
+		return nil, err
 	}
 	if ParallelTxTiming {
 		groupingWall = time.Since(groupingStart)
 	}
 
 	var waveTimings []wavePhaseTiming
+	var txApply []time.Duration
+	workersUsed := 0
 	if ParallelTxTiming {
 		waveTimings = make([]wavePhaseTiming, 0, len(groups))
+		txApply = make([]time.Duration, n)
 	}
 
 	for groupIdx, group := range groups {
-		waveStart := time.Now()
+		var waveStart time.Time
+		if ParallelTxTiming {
+			waveStart = time.Now()
+		}
 		sortedIdx := append([]int(nil), group...)
 		sort.Ints(sortedIdx)
-		waveTiming := wavePhaseTiming{txCount: len(sortedIdx)}
+		waveTiming := wavePhaseTiming{txCount: len(sortedIdx), txIndices: append([]int(nil), sortedIdx...)}
 
 		if len(sortedIdx) <= ParallelTxDirectExecutionMaxWaveSize || !ParallelTxWaveExecution {
 			for _, i := range sortedIdx {
 				tx := txs[i]
-				messageStart := time.Now()
-				msg, err := TransactionToMessage(tx, signer, header.BaseFee)
+				var txStart time.Time
 				if ParallelTxTiming {
-					waveTiming.messageSum += time.Since(messageStart)
+					txStart = time.Now()
 				}
+				msg, err := TransactionToMessage(tx, signer, header.BaseFee)
 				if err != nil {
 					return nil, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 				}
-				setupStart := time.Now()
 				statedb.SetTxContext(tx.Hash(), i)
-				if ParallelTxTiming {
-					waveTiming.setupSum += time.Since(setupStart)
-				}
-				execStart := time.Now()
 				var txGasUsed uint64
 				receipt, err := ApplyTransactionWithEVM(msg, gp, statedb, blockNumber, blockHash, context.Time, tx, &txGasUsed, evm)
 				if err != nil {
@@ -156,7 +160,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 				}
 				receipts[i] = receipt
 				if ParallelTxTiming {
-					waveTiming.execSum += time.Since(execStart)
+					txApply[i] = time.Since(txStart)
 				}
 			}
 			if ParallelTxDebug {
@@ -173,75 +177,105 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		coinbaseBase := new(uint256.Int).Set(statedb.GetBalance(header.Coinbase))
 		coinbaseFinal := new(uint256.Int).Set(coinbaseBase)
 		txForks := make([]*state.StateDB, n)
+		workers := ParallelTxWorkers
+		if workers <= 0 {
+			workers = runtime.GOMAXPROCS(0)
+		}
+		if workers > len(sortedIdx) {
+			workers = len(sortedIdx)
+		}
+		if workers > workersUsed {
+			workersUsed = workers
+		}
+		jobs := make(chan int, len(sortedIdx))
+		for _, idx := range sortedIdx {
+			jobs <- idx
+		}
+		close(jobs)
+
 		var wg sync.WaitGroup
 		var errMu sync.Mutex
 		var firstErr error
-		var messageSum, cloneSum, setupSum, execSum atomic.Int64
-		concurrentStart := time.Now()
-		for _, idx := range sortedIdx {
+		var concurrentStart time.Time
+		if ParallelTxTiming {
+			concurrentStart = time.Now()
+		}
+		for w := 0; w < workers; w++ {
 			wg.Add(1)
-			i := idx
 			go func() {
 				defer wg.Done()
-				tx := txs[i]
-				messageStart := time.Now()
-				msg, err := TransactionToMessage(tx, signer, header.BaseFee)
-				messageSum.Add(int64(time.Since(messageStart)))
-				if err != nil {
-					errMu.Lock()
-					if firstErr == nil {
-						firstErr = fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
-					}
-					errMu.Unlock()
-					return
-				}
-				cloneStart := time.Now()
 				child := statedb.CopyForParallelTx()
-				cloneSum.Add(int64(time.Since(cloneStart)))
 
-				setupStart := time.Now()
-				var parallelStateDB vm.StateDB = child
-				if hooks := cfg.Tracer; hooks != nil {
-					parallelStateDB = state.NewHookedState(child, hooks)
-				}
-				parallelEVM := vm.NewEVM(context, parallelStateDB, p.config, cfg)
-				child.SetTxContext(tx.Hash(), i)
-				setupSum.Add(int64(time.Since(setupStart)))
-
-				execStart := time.Now()
-				var txGasUsed uint64
-				receipt, err := ApplyTransactionWithEVM(msg, gp, child, blockNumber, blockHash, context.Time, tx, &txGasUsed, parallelEVM)
-				execSum.Add(int64(time.Since(execStart)))
-				if err != nil {
-					errMu.Lock()
-					if firstErr == nil {
-						firstErr = fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
+				for i := range jobs {
+					tx := txs[i]
+					var txStart time.Time
+					if ParallelTxTiming {
+						txStart = time.Now()
 					}
-					errMu.Unlock()
-					return
+					msg, err := TransactionToMessage(tx, signer, header.BaseFee)
+					if err != nil {
+						errMu.Lock()
+						if firstErr == nil {
+							firstErr = fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
+						}
+						errMu.Unlock()
+						return
+					}
+
+					var parallelStateDB vm.StateDB = child
+					if hooks := cfg.Tracer; hooks != nil {
+						parallelStateDB = state.NewHookedState(child, hooks)
+					}
+					parallelEVM := vm.NewEVM(context, parallelStateDB, p.config, cfg)
+					child.SetTxContext(tx.Hash(), i)
+
+					var txGasUsed uint64
+					receipt, err := ApplyTransactionWithEVM(msg, gp, child, blockNumber, blockHash, context.Time, tx, &txGasUsed, parallelEVM)
+					if ParallelTxTiming {
+						txApply[i] = time.Since(txStart)
+					}
+					if err != nil {
+						errMu.Lock()
+						if firstErr == nil {
+							firstErr = fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
+						}
+						errMu.Unlock()
+						return
+					}
+					receipts[i] = receipt
+					txForks[i] = child
 				}
-				receipts[i] = receipt
-				txForks[i] = child
 			}()
 		}
 		wg.Wait()
-		waveTiming.concurrentWall = time.Since(concurrentStart)
-		waveTiming.messageSum = time.Duration(messageSum.Load())
-		waveTiming.cloneSum = time.Duration(cloneSum.Load())
-		waveTiming.setupSum = time.Duration(setupSum.Load())
-		waveTiming.execSum = time.Duration(execSum.Load())
+		if ParallelTxTiming {
+			waveTiming.concurrentWall = time.Since(concurrentStart)
+		}
 		if firstErr != nil {
 			return nil, firstErr
 		}
-		mergeStart := time.Now()
+		var mergeStart time.Time
+		if ParallelTxTiming {
+			mergeStart = time.Now()
+		}
+		// Accounts once per reused fork; logs in ascending tx index for canonical indices.
+		mergedForks := make(map[*state.StateDB]struct{}, workers)
 		for _, i := range sortedIdx {
-			childCoinbase := txForks[i].GetBalance(header.Coinbase)
+			child := txForks[i]
+			if _, ok := mergedForks[child]; ok {
+				continue
+			}
+			mergedForks[child] = struct{}{}
+			childCoinbase := child.GetBalance(header.Coinbase)
 			if childCoinbase.Cmp(coinbaseBase) >= 0 {
 				coinbaseFinal.Add(coinbaseFinal, new(uint256.Int).Sub(childCoinbase, coinbaseBase))
 			} else {
 				coinbaseFinal.Sub(coinbaseFinal, new(uint256.Int).Sub(coinbaseBase, childCoinbase))
 			}
-			statedb.MergeParallelChildInto(txForks[i], txs[i].Hash())
+			statedb.MergeParallelChildAccounts(child)
+		}
+		for _, i := range sortedIdx {
+			statedb.MergeParallelChildLogs(txForks[i], txs[i].Hash())
 		}
 		// Coinbase balance deltas are additive; dynamic reads
 		// conflicts still require observed read/write sets and speculative re-execution and are not handled.
@@ -249,7 +283,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		if err := statedb.Error(); err != nil {
 			return nil, err
 		}
-		waveTiming.mergeWall = time.Since(mergeStart)
+		if ParallelTxTiming {
+			waveTiming.mergeWall = time.Since(mergeStart)
+		}
 		if ParallelTxDebug {
 			fmt.Printf("finished transaction execution group %d (tx indices, concurrent in-wave): %v\n", groupIdx, sortedIdx)
 		}
@@ -288,6 +324,16 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.chain.engine.Finalize(p.chain, header, tracingStateDB, block.Body())
 	if ParallelTxTiming && n > 0 {
+		var mergeTotal time.Duration
+		for _, w := range waveTimings {
+			mergeTotal += w.mergeWall
+		}
+		if workersUsed == 0 && ParallelTxGroupingByStorageOverlap && ParallelTxWaveExecution {
+			workersUsed = ParallelTxWorkers
+			if workersUsed <= 0 {
+				workersUsed = runtime.GOMAXPROCS(0)
+			}
+		}
 		recordProcessWallTiming(processTimingRecord{
 			grouping:     groupingWall,
 			waves:        waveTimings,
@@ -295,6 +341,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			txCount:      n,
 			groupCount:   len(groups),
 			parallel:     ParallelTxGroupingByStorageOverlap && ParallelTxWaveExecution,
+			txApply:      txApply,
+			workers:      workersUsed,
+			mergeTotal:   mergeTotal,
 		})
 	}
 
@@ -308,12 +357,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 type wavePhaseTiming struct {
 	txCount        int
+	txIndices      []int
 	wall           time.Duration
 	concurrentWall time.Duration // wall for parallel goroutine phase
-	messageSum     time.Duration // TransactionToMessage, summed across txs
-	cloneSum       time.Duration // StateDB.CopyForParallelTx, summed across txs
-	setupSum       time.Duration // child state and EVM setup, summed across txs
-	execSum        time.Duration // per-tx EVM execution, summed across txs
 	mergeWall      time.Duration // wall for sequential merge phase
 	parallel       bool
 }
@@ -322,20 +368,50 @@ type processTimingRecord struct {
 	grouping     time.Duration
 	waves        []wavePhaseTiming
 	finalization time.Duration
+	validate     time.Duration
+	write        time.Duration
+	mergeTotal   time.Duration
 	txCount      int
 	groupCount   int
+	workers      int
 	parallel     bool
+	complete     bool            // true if validate+write finished successfully
+	txApply      []time.Duration // per-tx apply wall (seq costs for Amdahl)
 }
 
 var (
 	processTimingMu      sync.Mutex
 	processTimingRecords []processTimingRecord
+	parallelTxTimingFile string
 )
+
+// SetParallelTxTimingFile sets the JSONL path flushed by PrintAndClearParallelTxTimings.
+// Empty disables file output (stdout summary still prints).
+func SetParallelTxTimingFile(path string) {
+	processTimingMu.Lock()
+	parallelTxTimingFile = path
+	processTimingMu.Unlock()
+}
 
 func recordProcessWallTiming(record processTimingRecord) {
 	processTimingMu.Lock()
 	processTimingRecords = append(processTimingRecords, record)
 	processTimingMu.Unlock()
+}
+
+// AttachPostProcessTiming adds validate+write walls to the latest Process timing sample.
+// complete is true only when the block was fully written after a successful validate.
+func AttachPostProcessTiming(validate, write time.Duration, complete bool) {
+	if !ParallelTxTiming {
+		return
+	}
+	processTimingMu.Lock()
+	defer processTimingMu.Unlock()
+	if n := len(processTimingRecords); n > 0 {
+		processTimingRecords[n-1].validate = validate
+		processTimingRecords[n-1].write = write
+		processTimingRecords[n-1].complete = complete
+	}
 }
 
 // ClearParallelTxTimings discards all buffered timing diagnostics.
@@ -345,126 +421,121 @@ func ClearParallelTxTimings() {
 	processTimingMu.Unlock()
 }
 
-// PrintAndClearParallelTxTimings prints buffered diagnostics outside measured execution.
+// amdahlTimingJSON is one Process sample for offline Amdahl analysis.
+type amdahlTimingJSON struct {
+	Mode             string           `json:"mode"`
+	Complete         bool             `json:"complete"`
+	TxCount          int              `json:"tx_count"`
+	GroupCount       int              `json:"group_count"`
+	Workers          int              `json:"workers"`
+	GroupingNs       int64            `json:"grouping_ns"`
+	FinalizationNs   int64            `json:"finalization_ns"`
+	ValidateNs       int64            `json:"validate_ns"`
+	WriteNs          int64            `json:"write_ns"`
+	MergeNs          int64            `json:"merge_ns"`
+	SerialNs         int64            `json:"serial_ns"`
+	ParallelizableNs int64            `json:"parallelizable_ns"`
+	TxApplyNs        []int64          `json:"tx_apply_ns"`
+	Waves            []amdahlWaveJSON `json:"waves"`
+}
+
+type amdahlWaveJSON struct {
+	Txs              []int `json:"txs"`
+	Size             int   `json:"size"`
+	WallNs           int64 `json:"wall_ns"`
+	ConcurrentWallNs int64 `json:"concurrent_wall_ns"`
+	MergeNs          int64 `json:"merge_ns"`
+	Parallel         bool  `json:"parallel"`
+}
+
+func recordToAmdahlJSON(record processTimingRecord) amdahlTimingJSON {
+	mode := "sequential"
+	if record.parallel {
+		mode = "parallel"
+	}
+	txApplyNs := make([]int64, len(record.txApply))
+	for i, d := range record.txApply {
+		txApplyNs[i] = d.Nanoseconds()
+	}
+	waves := make([]amdahlWaveJSON, len(record.waves))
+	var parallelizable time.Duration
+	for i, w := range record.waves {
+		waves[i] = amdahlWaveJSON{
+			Txs:              append([]int(nil), w.txIndices...),
+			Size:             w.txCount,
+			WallNs:           w.wall.Nanoseconds(),
+			ConcurrentWallNs: w.concurrentWall.Nanoseconds(),
+			MergeNs:          w.mergeWall.Nanoseconds(),
+			Parallel:         w.parallel,
+		}
+	}
+	if record.parallel {
+		// Observed parallelizable wall: concurrent span per parallel wave,
+		// full wave wall for direct-exec waves (ideally parallelizable).
+		for _, w := range record.waves {
+			if w.parallel {
+				parallelizable += w.concurrentWall
+			} else {
+				parallelizable += w.wall
+			}
+		}
+	} else {
+		for _, d := range record.txApply {
+			parallelizable += d
+		}
+	}
+	serial := record.grouping + record.mergeTotal + record.finalization + record.validate + record.write
+	return amdahlTimingJSON{
+		Mode:             mode,
+		Complete:         record.complete,
+		TxCount:          record.txCount,
+		GroupCount:       record.groupCount,
+		Workers:          record.workers,
+		GroupingNs:       record.grouping.Nanoseconds(),
+		FinalizationNs:   record.finalization.Nanoseconds(),
+		ValidateNs:       record.validate.Nanoseconds(),
+		WriteNs:          record.write.Nanoseconds(),
+		MergeNs:          record.mergeTotal.Nanoseconds(),
+		SerialNs:         serial.Nanoseconds(),
+		ParallelizableNs: parallelizable.Nanoseconds(),
+		TxApplyNs:        txApplyNs,
+		Waves:            waves,
+	}
+}
+
+// PrintAndClearParallelTxTimings appends JSONL if configured and clears the buffer.
 func PrintAndClearParallelTxTimings() {
 	processTimingMu.Lock()
 	records := processTimingRecords
 	processTimingRecords = nil
+	outPath := parallelTxTimingFile
 	processTimingMu.Unlock()
 
-	for i, record := range records {
-		mode := "sequential"
-		if record.parallel {
-			mode = "parallel"
-		}
-		fmt.Printf("\nprocess timing sample %d mode=%s\n", i+1, mode)
-		printProcessWallTiming(record)
-	}
-}
-
-func printProcessWallTiming(record processTimingRecord) {
-	grouping := record.grouping
-	waves := record.waves
-	finalization := record.finalization
-	txCount := record.txCount
-	groupCount := record.groupCount
-	var waveTotal, waveMin, waveMax time.Duration
-	var (
-		parallelTxs, parallelWaveCount                  int
-		messageSum, cloneSum, setupSum, execSum, mergeSum time.Duration
-		concurrentWallSum                               time.Duration
-		seqTxs                                          int
-		seqMessageSum, seqSetupSum, seqExecSum           time.Duration
-	)
-	for i, wave := range waves {
-		waveTotal += wave.wall
-		if i == 0 || wave.wall < waveMin {
-			waveMin = wave.wall
-		}
-		if wave.wall > waveMax {
-			waveMax = wave.wall
-		}
-		if wave.parallel {
-			parallelTxs += wave.txCount
-			parallelWaveCount++
-			messageSum += wave.messageSum
-			cloneSum += wave.cloneSum
-			setupSum += wave.setupSum
-			execSum += wave.execSum
-			mergeSum += wave.mergeWall
-			concurrentWallSum += wave.concurrentWall
+	if outPath != "" && len(records) > 0 {
+		if err := appendAmdahlTimingJSONL(outPath, records); err != nil {
+			fmt.Printf("parallel timing JSONL write failed: %v\n", err)
 		} else {
-			seqTxs += wave.txCount
-			seqMessageSum += wave.messageSum
-			seqSetupSum += wave.setupSum
-			seqExecSum += wave.execSum
+			fmt.Printf("parallel timing JSONL appended %d sample(s) -> %s\n", len(records), outPath)
 		}
 	}
+}
 
-	total := grouping + waveTotal + finalization
-	fmt.Printf("process wall timing: grouping=%v waves=%v finalization=%v total=%v (txs=%d groups=%d)\n",
-		grouping, waveTotal, finalization, total, txCount, groupCount)
-
-	if txCount == 0 {
-		return
+func appendAmdahlTimingJSONL(path string, records []processTimingRecord) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
 	}
-
-	if parallelTxs > 0 {
-		fmt.Printf("  parallel wave phases (sum across txs, avg per parallel tx):\n")
-		fmt.Printf("    message conversion: sum=%v avg=%v\n", messageSum, avgDuration(messageSum, parallelTxs))
-		fmt.Printf("    state clone:        sum=%v avg=%v\n", cloneSum, avgDuration(cloneSum, parallelTxs))
-		fmt.Printf("    EVM/state setup:    sum=%v avg=%v\n", setupSum, avgDuration(setupSum, parallelTxs))
-		fmt.Printf("    execute:           sum=%v avg=%v\n", execSum, avgDuration(execSum, parallelTxs))
-		fmt.Printf("    merge(finalize):   sum=%v avg=%v\n", mergeSum, avgDuration(mergeSum, parallelTxs))
-		fmt.Printf("    concurrent wall:   sum=%v avg=%v per parallel wave (parallel span, not CPU)\n",
-			concurrentWallSum, avgDuration(concurrentWallSum, parallelWaveCount))
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
 	}
-	if seqTxs > 0 {
-		fmt.Printf("  sequential in-wave txs=%d message_sum=%v avg=%v setup_sum=%v avg=%v exec_sum=%v avg=%v\n",
-			seqTxs,
-			seqMessageSum, avgDuration(seqMessageSum, seqTxs),
-			seqSetupSum, avgDuration(seqSetupSum, seqTxs),
-			seqExecSum, avgDuration(seqExecSum, seqTxs))
-	}
-
-	const maxListed = 16
-	if len(waves) == 0 {
-		return
-	}
-	if len(waves) <= maxListed {
-		for i, wave := range waves {
-			printWavePhaseTiming(i, wave)
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	for _, record := range records {
+		if err := enc.Encode(recordToAmdahlJSON(record)); err != nil {
+			return err
 		}
-		return
 	}
-
-	avg := waveTotal / time.Duration(len(waves))
-	fmt.Printf("  waves: count=%d min=%v max=%v avg=%v\n", len(waves), waveMin, waveMax, avg)
-}
-
-func printWavePhaseTiming(idx int, wave wavePhaseTiming) {
-	if wave.parallel {
-		fmt.Printf("  wave %d (%d txs, parallel): wall=%v concurrent_wall=%v message_sum=%v (avg/t=%v) clone_sum=%v (avg/t=%v) setup_sum=%v (avg/t=%v) exec_sum=%v (avg/t=%v) merge=%v (avg/t=%v)\n",
-			idx, wave.txCount, wave.wall, wave.concurrentWall,
-			wave.messageSum, avgDuration(wave.messageSum, wave.txCount),
-			wave.cloneSum, avgDuration(wave.cloneSum, wave.txCount),
-			wave.setupSum, avgDuration(wave.setupSum, wave.txCount),
-			wave.execSum, avgDuration(wave.execSum, wave.txCount),
-			wave.mergeWall, avgDuration(wave.mergeWall, wave.txCount))
-		return
-	}
-	fmt.Printf("  wave %d (%d txs, sequential): wall=%v message_sum=%v (avg/t=%v) setup_sum=%v (avg/t=%v) exec_sum=%v (avg/t=%v)\n",
-		idx, wave.txCount, wave.wall,
-		wave.messageSum, avgDuration(wave.messageSum, wave.txCount),
-		wave.setupSum, avgDuration(wave.setupSum, wave.txCount),
-		wave.execSum, avgDuration(wave.execSum, wave.txCount))
-}
-
-func avgDuration(total time.Duration, count int) time.Duration {
-	if count == 0 {
-		return 0
-	}
-	return total / time.Duration(count)
+	return nil
 }
 
 // ApplyTransactionWithEVM attempts to apply a transaction to the given state database

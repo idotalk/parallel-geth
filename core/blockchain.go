@@ -2052,12 +2052,24 @@ func (bc *BlockChain) processBlock(parentRoot common.Hash, block *types.Block, s
 	}
 	ptime := time.Since(pstart)
 
+	var (
+		vtime    time.Duration
+		wtime    time.Duration
+		complete bool
+	)
+	if ParallelTxTiming {
+		defer func() {
+			AttachPostProcessTiming(vtime, wtime, complete)
+		}()
+	}
+
 	vstart := time.Now()
 	if err := bc.validator.ValidateState(block, statedb, res, false); err != nil {
+		vtime = time.Since(vstart)
 		bc.reportBlock(block, res, err)
 		return nil, err
 	}
-	vtime := time.Since(vstart)
+	vtime = time.Since(vstart)
 
 	// If witnesses was generated and stateless self-validation requested, do
 	// that now. Self validation should *never* run in production, it's more of
@@ -2119,16 +2131,18 @@ func (bc *BlockChain) processBlock(parentRoot common.Hash, block *types.Block, s
 	} else {
 		status, err = bc.writeBlockAndSetHead(block, res.Receipts, res.Logs, statedb, false)
 	}
+	wtime = time.Since(wstart)
 	if err != nil {
 		return nil, err
 	}
+	complete = true
 	// Update the metrics touched during block commit
 	accountCommitTimer.Update(statedb.AccountCommits)   // Account commits are complete, we can mark them
 	storageCommitTimer.Update(statedb.StorageCommits)   // Storage commits are complete, we can mark them
 	snapshotCommitTimer.Update(statedb.SnapshotCommits) // Snapshot commits are complete, we can mark them
 	triedbCommitTimer.Update(statedb.TrieDBCommits)     // Trie database commits are complete, we can mark them
 
-	blockWriteTimer.Update(time.Since(wstart) - max(statedb.AccountCommits, statedb.StorageCommits) /* concurrent */ - statedb.SnapshotCommits - statedb.TrieDBCommits)
+	blockWriteTimer.Update(wtime - max(statedb.AccountCommits, statedb.StorageCommits) /* concurrent */ - statedb.SnapshotCommits - statedb.TrieDBCommits)
 	elapsed := time.Since(startTime) + 1 // prevent zero division
 	blockInsertTimer.Update(elapsed)
 

@@ -1,307 +1,329 @@
 File: benchmarks.test.exe
-Build ID: C:\Users\itay.elam\Desktop\technion\parallel-geth\benchmarks.test.exe2026-07-24 14:38:34.2257604 +0300 IDT
+Build ID: C:\Users\itay.elam\Desktop\technion\parallel-geth\benchmarks.test.exe2026-07-24 21:41:29.3217235 +0300 IDT
 Type: cpu
-Time: 2026-07-24 14:38:50 IDT
-Duration: 2.79s, Total samples = 6.08s (217.73%)
-Showing nodes accounting for 4.38s, 72.04% of 6.08s total
-Dropped 380 nodes (cum <= 0.03s)
+Time: 2026-07-24 21:41:35 IDT
+Duration: 3.31s, Total samples = 6.44s (194.64%)
+Showing nodes accounting for 4.88s, 75.78% of 6.44s total
+Dropped 396 nodes (cum <= 0.03s)
       flat  flat%   sum%        cum   cum%
-         0     0%     0%      1.80s 29.61%  runtime.systemstack
-     0.02s  0.33%  0.33%      1.63s 26.81%  github.com/ethereum/go-ethereum/core.(*StateProcessor).Process.func1
-         0     0%  0.33%      1.30s 21.38%  github.com/ethereum/go-ethereum/benchmarks.TestParallelBenchmarkAgainstRealBlocks
-         0     0%  0.33%      1.30s 21.38%  testing.tRunner
-         0     0%  0.33%      1.25s 20.56%  github.com/ethereum/go-ethereum/benchmarks.timeInsertLocal
-         0     0%  0.33%      1.25s 20.56%  github.com/ethereum/go-ethereum/benchmarks.timeParallelInsert (inline)
-     0.03s  0.49%  0.82%      1.15s 18.91%  runtime.mallocgc
-         0     0%  0.82%      0.93s 15.30%  github.com/ethereum/go-ethereum/core.ApplyTransactionWithEVM
-         0     0%  0.82%      0.91s 14.97%  runtime.gcBgMarkWorker.func2
-     0.03s  0.49%  1.32%      0.91s 14.97%  runtime.gcDrain
-     0.04s  0.66%  1.97%      0.88s 14.47%  runtime.lock2
-         0     0%  1.97%      0.88s 14.47%  runtime.lockWithRank (inline)
-         0     0%  1.97%      0.86s 14.14%  github.com/ethereum/go-ethereum/core.(*BlockChain).InsertChain
-         0     0%  1.97%      0.86s 14.14%  github.com/ethereum/go-ethereum/core.(*BlockChain).insertChain
-     0.02s  0.33%  2.30%      0.83s 13.65%  github.com/ethereum/go-ethereum/core.(*stateTransition).execute
-         0     0%  2.30%      0.83s 13.65%  github.com/ethereum/go-ethereum/core.ApplyMessage
-         0     0%  2.30%      0.83s 13.65%  runtime.gcBgMarkWorker
-         0     0%  2.30%      0.81s 13.32%  runtime.lock (partial-inline)
-     0.79s 12.99% 15.30%      0.79s 12.99%  runtime.semasleep
-         0     0% 15.30%      0.76s 12.50%  github.com/ethereum/go-ethereum/core.(*BlockChain).processBlock
-         0     0% 15.30%      0.68s 11.18%  runtime.mcall
-     0.01s  0.16% 15.46%      0.68s 11.18%  runtime.newobject
-         0     0% 15.46%      0.68s 11.18%  runtime.schedule
-     0.02s  0.33% 15.79%      0.62s 10.20%  runtime.findRunnable
-         0     0% 15.79%      0.58s  9.54%  runtime.gcDrainMarkWorkerDedicated (inline)
-         0     0% 15.79%      0.46s  7.57%  runtime.newstack
-         0     0% 15.79%      0.44s  7.24%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Commit
-         0     0% 15.79%      0.44s  7.24%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commitAndFlush
-     0.02s  0.33% 16.12%      0.44s  7.24%  runtime.mallocgcSmallScanNoHeader
-         0     0% 16.12%      0.42s  6.91%  runtime.scanSpan
-         0     0% 16.12%      0.41s  6.74%  runtime.park_m
-     0.29s  4.77% 20.89%      0.41s  6.74%  runtime.tryDeferToSpanScan
-         0     0% 20.89%      0.40s  6.58%  github.com/ethereum/go-ethereum/core.(*Genesis).Commit
-         0     0% 20.89%      0.39s  6.41%  github.com/ethereum/go-ethereum/core.NewBlockChain
-         0     0% 20.89%      0.39s  6.41%  github.com/ethereum/go-ethereum/core.SetupGenesisBlockWithOverride
-     0.02s  0.33% 21.22%      0.39s  6.41%  github.com/ethereum/go-ethereum/core/state.(*StateDB).CopyForParallelTx
-     0.03s  0.49% 21.71%      0.38s  6.25%  github.com/ethereum/go-ethereum/core.(*stateTransition).preCheck
-     0.14s  2.30% 24.01%      0.38s  6.25%  runtime.scanObjectsSmall
-         0     0% 24.01%      0.37s  6.09%  runtime.morestack
-         0     0% 24.01%      0.36s  5.92%  golang.org/x/crypto/sha3.(*state).permute (inline)
-     0.36s  5.92% 29.93%      0.36s  5.92%  golang.org/x/crypto/sha3.keccakF1600
-         0     0% 29.93%      0.34s  5.59%  github.com/ethereum/go-ethereum/core.(*BlockChain).writeBlockAndSetHead
-     0.01s  0.16% 30.10%      0.34s  5.59%  github.com/ethereum/go-ethereum/core.TransactionToMessage
-         0     0% 30.10%      0.33s  5.43%  runtime.gcDrainMarkWorkerIdle (inline)
-     0.04s  0.66% 30.76%      0.33s  5.43%  runtime.mapassign
-         0     0% 30.76%      0.32s  5.26%  github.com/ethereum/go-ethereum/core.(*BlockChain).writeBlockWithState
-         0     0% 30.76%      0.32s  5.26%  github.com/ethereum/go-ethereum/core.flushAlloc
-     0.01s  0.16% 30.92%      0.32s  5.26%  github.com/ethereum/go-ethereum/core/state.(*StateDB).getStateObject
-         0     0% 30.92%      0.32s  5.26%  runtime.deductAssistCredit
-         0     0% 30.92%      0.32s  5.26%  runtime.gcAssistAlloc
-         0     0% 30.92%      0.30s  4.93%  runtime.gopreempt_m (inline)
-         0     0% 30.92%      0.30s  4.93%  runtime.goschedImpl
-     0.02s  0.33% 31.25%      0.28s  4.61%  github.com/ethereum/go-ethereum/core/state.(*StateDB).IntermediateRoot
-         0     0% 31.25%      0.27s  4.44%  runtime.goexit0
-     0.02s  0.33% 31.58%      0.26s  4.28%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commit
-         0     0% 31.58%      0.26s  4.28%  github.com/ethereum/go-ethereum/trie.(*committer).commitChildren.func1
-         0     0% 31.58%      0.26s  4.28%  golang.org/x/crypto/sha3.(*state).Read
-         0     0% 31.58%      0.26s  4.28%  golang.org/x/crypto/sha3.(*state).padAndPermute
-     0.12s  1.97% 33.55%      0.26s  4.28%  runtime.scanObject
-         0     0% 33.55%      0.25s  4.11%  github.com/ethereum/go-ethereum/core/state.(*multiStateReader).Account
-     0.02s  0.33% 33.88%      0.25s  4.11%  github.com/ethereum/go-ethereum/core/state.(*stateObject).deepCopy
-         0     0% 33.88%      0.25s  4.11%  github.com/ethereum/go-ethereum/core/state.(*trieReader).Account
-         0     0% 33.88%      0.25s  4.11%  runtime.gcAssistAlloc.func2
-         0     0% 33.88%      0.25s  4.11%  runtime.gcAssistAlloc1
-     0.05s  0.82% 34.70%      0.25s  4.11%  runtime.mallocgcSmallNoscan
-     0.03s  0.49% 35.20%      0.25s  4.11%  runtime.markroot
-     0.01s  0.16% 35.36%      0.22s  3.62%  github.com/ethereum/go-ethereum/core.(*StateProcessor).Process
-     0.01s  0.16% 35.53%      0.22s  3.62%  golang.org/x/sync/errgroup.(*Group).Go.func1
-     0.01s  0.16% 35.69%      0.22s  3.62%  runtime.(*mcache).nextFree
-         0     0% 35.69%      0.21s  3.45%  github.com/ethereum/go-ethereum/trie.(*StateTrie).GetAccount
-         0     0% 35.69%      0.21s  3.45%  github.com/ethereum/go-ethereum/trie.(*committer).commit
-         0     0% 35.69%      0.21s  3.45%  runtime.(*mcache).refill
-         0     0% 35.69%      0.21s  3.45%  runtime.bgsweep
-         0     0% 35.69%      0.21s  3.45%  runtime.gcDrainN
-     0.20s  3.29% 38.98%      0.21s  3.45%  runtime.preemptM
-     0.01s  0.16% 39.14%      0.21s  3.45%  runtime.preemptone
-         0     0% 39.14%      0.20s  3.29%  github.com/ethereum/go-ethereum/core.(*BlockValidator).ValidateState
-         0     0% 39.14%      0.20s  3.29%  github.com/ethereum/go-ethereum/core/state.(*StateDB).AddBalance
-         0     0% 39.14%      0.20s  3.29%  github.com/ethereum/go-ethereum/core/state.(*StateDB).updateStateObject
-         0     0% 39.14%      0.20s  3.29%  github.com/ethereum/go-ethereum/trie.(*StateTrie).UpdateAccount
-         0     0% 39.14%      0.20s  3.29%  github.com/ethereum/go-ethereum/trie.(*committer).store
-         0     0% 39.14%      0.20s  3.29%  runtime.gcstopm
-         0     0% 39.14%      0.19s  3.12%  github.com/ethereum/go-ethereum/core/state.(*trieReader).account
-         0     0% 39.14%      0.19s  3.12%  github.com/ethereum/go-ethereum/trie.(*committer).commitChildren
-         0     0% 39.14%      0.18s  2.96%  runtime.(*mcentral).cacheSpan
-         0     0% 39.14%      0.17s  2.80%  github.com/ethereum/go-ethereum/core/types.DeriveSha
-         0     0% 39.14%      0.17s  2.80%  github.com/ethereum/go-ethereum/triedb.(*Database).Update
-         0     0% 39.14%      0.17s  2.80%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Update
-         0     0% 39.14%      0.17s  2.80%  runtime.(*mheap).allocSpan
-         0     0% 39.14%      0.16s  2.63%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commit.func3
-         0     0% 39.14%      0.16s  2.63%  github.com/ethereum/go-ethereum/rlp.DecodeBytes
-         0     0% 39.14%      0.16s  2.63%  runtime.makeslice
-     0.16s  2.63% 41.78%      0.16s  2.63%  runtime.memclrNoHeapPointers
-         0     0% 41.78%      0.16s  2.63%  runtime.runSafePointFn
-     0.02s  0.33% 42.11%      0.16s  2.63%  runtime.sweepone
-     0.01s  0.16% 42.27%      0.16s  2.63%  runtime.wbBufFlush1
-         0     0% 42.27%      0.15s  2.47%  github.com/ethereum/go-ethereum/core/state.(*StateDB).getOrNewStateObject
-         0     0% 42.27%      0.15s  2.47%  github.com/ethereum/go-ethereum/rlp.(*Stream).Decode
-         0     0% 42.27%      0.15s  2.47%  internal/runtime/maps.(*table).rehash
-         0     0% 42.27%      0.15s  2.47%  runtime.copystack
-         0     0% 42.27%      0.15s  2.47%  runtime.markroot.func1
-         0     0% 42.27%      0.15s  2.47%  runtime.wbBufFlush
-     0.01s  0.16% 42.43%      0.15s  2.47%  runtime.wbBufFlush.func1
-     0.04s  0.66% 43.09%      0.14s  2.30%  gcWriteBarrier
-         0     0% 43.09%      0.14s  2.30%  github.com/ethereum/go-ethereum/core/state.(*StateDB).GetNonce
-     0.02s  0.33% 43.42%      0.14s  2.30%  github.com/ethereum/go-ethereum/core/state.(*stateObject).SetBalance
-         0     0% 43.42%      0.14s  2.30%  github.com/ethereum/go-ethereum/core/vm.(*EVM).Call
-         0     0% 43.42%      0.14s  2.30%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).encode
-     0.01s  0.16% 43.59%      0.14s  2.30%  github.com/ethereum/go-ethereum/rlp.EncodeToBytes
-     0.02s  0.33% 43.91%      0.14s  2.30%  internal/runtime/maps.(*table).grow
-         0     0% 43.91%      0.14s  2.30%  internal/runtime/maps.newGroups (inline)
-         0     0% 43.91%      0.14s  2.30%  internal/runtime/maps.newarray
-         0     0% 43.91%      0.14s  2.30%  runtime.(*mheap).alloc.func1
-     0.01s  0.16% 44.08%      0.14s  2.30%  runtime.growslice
-         0     0% 44.08%      0.14s  2.30%  runtime.newarray
-     0.14s  2.30% 46.38%      0.14s  2.30%  runtime.semawakeup
-         0     0% 46.38%      0.13s  2.14%  github.com/ethereum/go-ethereum/core/state.Storage.Copy
-     0.01s  0.16% 46.55%      0.13s  2.14%  github.com/ethereum/go-ethereum/core/state.newObject
-     0.01s  0.16% 46.71%      0.13s  2.14%  github.com/ethereum/go-ethereum/crypto.Keccak256
-         0     0% 46.71%      0.13s  2.14%  github.com/ethereum/go-ethereum/trie.(*StackTrie).Update
-         0     0% 46.71%      0.13s  2.14%  github.com/ethereum/go-ethereum/trie.(*StackTrie).insert
-     0.03s  0.49% 47.20%      0.13s  2.14%  internal/runtime/maps.(*Map).Clone
-         0     0% 47.20%      0.13s  2.14%  maps.Clone[go.shape.map[github.com/ethereum/go-ethereum/common.Hash]github.com/ethereum/go-ethereum/common.Hash,go.shape.[32]uint8,go.shape.[32]uint8] (inline)
-         0     0% 47.20%      0.13s  2.14%  maps.clone
-     0.01s  0.16% 47.37%      0.13s  2.14%  runtime.(*sweepLocked).sweep
-     0.03s  0.49% 47.86%      0.13s  2.14%  runtime.mapassign_faststr
-         0     0% 47.86%      0.13s  2.14%  runtime.wakep
-         0     0% 47.86%      0.12s  1.97%  github.com/ethereum/go-ethereum/core/state.(*StateDB).createObject
-     0.01s  0.16% 48.03%      0.12s  1.97%  github.com/ethereum/go-ethereum/core/state.(*journal).balanceChange
-     0.01s  0.16% 48.19%      0.12s  1.97%  github.com/ethereum/go-ethereum/trie.(*StackTrie).hash
-         0     0% 48.19%      0.12s  1.97%  github.com/ethereum/go-ethereum/trie.nodeToBytes
-         0     0% 48.19%      0.12s  1.97%  github.com/ethereum/go-ethereum/trie/trienode.(*NodeSet).ForEachWithOrder
-     0.06s  0.99% 49.18%      0.12s  1.97%  runtime.gcmarknewobject
-         0     0% 49.18%      0.12s  1.97%  runtime.preemptall
-     0.02s  0.33% 49.51%      0.12s  1.97%  runtime.scanstack
-     0.01s  0.16% 49.67%      0.12s  1.97%  runtime.stealWork
-     0.01s  0.16% 49.84%      0.11s  1.81%  github.com/ethereum/go-ethereum/core/state.(*stateObject).commit
-     0.01s  0.16% 50.00%      0.11s  1.81%  github.com/ethereum/go-ethereum/rlp.makeStructDecoder.func1
-         0     0% 50.00%      0.11s  1.81%  github.com/ethereum/go-ethereum/trie.(*hasher).hashDataTo
-         0     0% 50.00%      0.11s  1.81%  golang.org/x/crypto/sha3.(*state).Write
-         0     0% 50.00%      0.11s  1.81%  runtime.(*mcentral).grow
-     0.01s  0.16% 50.16%      0.11s  1.81%  runtime.mapaccess1
-     0.11s  1.81% 51.97%      0.11s  1.81%  runtime.nextFreeFast (inline)
-     0.10s  1.64% 53.62%      0.10s  1.64%  aeshashbody
-         0     0% 53.62%      0.10s  1.64%  github.com/ethereum/go-ethereum/core.(*BlockValidator).ValidateBody
-         0     0% 53.62%      0.10s  1.64%  github.com/ethereum/go-ethereum/core.(*insertIterator).next
-     0.01s  0.16% 53.78%      0.10s  1.64%  github.com/ethereum/go-ethereum/core.(*stateTransition).buyGas
-         0     0% 53.78%      0.10s  1.64%  github.com/ethereum/go-ethereum/core/state.(*journal).append
-         0     0% 53.78%      0.10s  1.64%  github.com/ethereum/go-ethereum/triedb.(*Database).Commit
-         0     0% 53.78%      0.10s  1.64%  runtime.forEachPInternal
-         0     0% 53.78%      0.10s  1.64%  runtime.gcMarkDone.forEachP.func5
-     0.03s  0.49% 54.28%      0.10s  1.64%  runtime.runqgrab
-         0     0% 54.28%      0.10s  1.64%  runtime.runqsteal
-         0     0% 54.28%      0.10s  1.64%  runtime.stackalloc
-     0.01s  0.16% 54.44%      0.10s  1.64%  runtime.stackcacherefill
-         0     0% 54.44%      0.09s  1.48%  github.com/ethereum/go-ethereum/core/state.(*StateDB).SubBalance
-     0.01s  0.16% 54.61%      0.09s  1.48%  github.com/ethereum/go-ethereum/rlp.makeEncoderWriter.func2
-         0     0% 54.61%      0.09s  1.48%  github.com/ethereum/go-ethereum/rlp.makePtrWriter.func1
-         0     0% 54.61%      0.09s  1.48%  github.com/ethereum/go-ethereum/trie.(*hasher).encodeFullNode
-         0     0% 54.61%      0.09s  1.48%  github.com/ethereum/go-ethereum/trie.(*hasher).encodeFullNode.func1
-         0     0% 54.61%      0.09s  1.48%  github.com/ethereum/go-ethereum/trie.(*hasher).hash
-         0     0% 54.61%      0.09s  1.48%  internal/runtime/maps.newTable
-         0     0% 54.61%      0.09s  1.48%  runtime.(*gcControllerState).enlistWorker
-         0     0% 54.61%      0.09s  1.48%  runtime.(*mheap).alloc
-         0     0% 54.61%      0.09s  1.48%  runtime.notewakeup
-         0     0% 54.61%      0.09s  1.48%  runtime.osyield (inline)
-     0.05s  0.82% 55.43%      0.09s  1.48%  runtime.scanblock
-     0.09s  1.48% 56.91%      0.09s  1.48%  runtime.spanClass.sizeclass (inline)
-         0     0% 56.91%      0.08s  1.32%  encoding/json.(*encodeState).marshal
-         0     0% 56.91%      0.08s  1.32%  encoding/json.(*encodeState).reflectValue
-         0     0% 56.91%      0.08s  1.32%  encoding/json.Marshal
-         0     0% 56.91%      0.08s  1.32%  github.com/ethereum/go-ethereum/core/rawdb.iterateTransactions.func2
-         0     0% 56.91%      0.08s  1.32%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Finalise
-     0.02s  0.33% 57.24%      0.08s  1.32%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Prepare
-         0     0% 57.24%      0.08s  1.32%  github.com/ethereum/go-ethereum/crypto.Keccak256Hash
-     0.01s  0.16% 57.40%      0.08s  1.32%  golang.org/x/sync/errgroup.(*Group).Go
-     0.03s  0.49% 57.89%      0.08s  1.32%  internal/runtime/maps.(*Iter).Next
-     0.01s  0.16% 58.06%      0.08s  1.32%  internal/runtime/maps.(*table).reset
-     0.02s  0.33% 58.39%      0.08s  1.32%  internal/sync.(*Mutex).Lock (inline)
-     0.06s  0.99% 59.38%      0.08s  1.32%  runtime.findObject
-         0     0% 59.38%      0.08s  1.32%  runtime.memhash_varlen
-     0.08s  1.32% 60.69%      0.08s  1.32%  runtime.memmove
-         0     0% 60.69%      0.08s  1.32%  runtime.unlock (inline)
-     0.02s  0.33% 61.02%      0.08s  1.32%  runtime.unlock2
-         0     0% 61.02%      0.08s  1.32%  runtime.unlockWithRank (inline)
-         0     0% 61.02%      0.08s  1.32%  sync.(*Mutex).Lock (inline)
-         0     0% 61.02%      0.07s  1.15%  encoding/json.mapEncoder.encode
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Exist
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/core/state.(*StateDB).markUpdate (inline)
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/core/types.SlimAccountRLP
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/trie.(*Trie).Update (inline)
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/trie.(*Trie).update
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/trie.ForGatherChildren
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/trie.forGatherChildren
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Commit
-         0     0% 61.02%      0.07s  1.15%  github.com/ethereum/go-ethereum/triedb/hashdb.(*cachedNode).forChildren
-         0     0% 61.02%      0.07s  1.15%  internal/runtime/maps.(*Map).growToSmall
-         0     0% 61.02%      0.07s  1.15%  math/big.nat.make (inline)
-     0.07s  1.15% 62.17%      0.07s  1.15%  runtime.(*mspan).writeHeapBitsSmall
-     0.04s  0.66% 62.83%      0.07s  1.15%  runtime.(*spanSet).pop
-         0     0% 62.83%      0.07s  1.15%  runtime.heapSetTypeNoHeader (inline)
-         0     0% 62.83%      0.07s  1.15%  runtime.markrootBlock
-         0     0% 62.83%      0.07s  1.15%  runtime.newproc
-         0     0% 62.83%      0.07s  1.15%  runtime.newproc.func1
-     0.01s  0.16% 62.99%      0.07s  1.15%  runtime.newproc1
-         0     0% 62.99%      0.07s  1.15%  runtime.procyield (inline)
-     0.07s  1.15% 64.14%      0.07s  1.15%  runtime.procyieldAsm
-     0.07s  1.15% 65.30%      0.07s  1.15%  runtime.runqgrab.osyield.func1
-         0     0% 65.30%      0.07s  1.15%  runtime.scanframeworker
-         0     0% 65.30%      0.07s  1.15%  runtime.startm
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/core/types.(*Transaction).DecodeRLP
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.Encode
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.decodeDecoder
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.decodeListSlice
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.decodeSliceElems
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.makeListDecoder.func3
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/rlp.makePtrDecoder.makeSimplePtrDecoder.func1
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/trie.(*Trie).resolveAndTrack
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/trie.decodeNodeUnsafe
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).commit
-         0     0% 65.30%      0.06s  0.99%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).commit.func1
-         0     0% 65.30%      0.06s  0.99%  internal/sync.(*Mutex).lockSlow
-         0     0% 65.30%      0.06s  0.99%  runtime.bulkBarrierPreWrite
-     0.01s  0.16% 65.46%      0.06s  0.99%  runtime.gdestroy
-         0     0% 65.46%      0.06s  0.99%  runtime.mapIterNext
-         0     0% 65.46%      0.06s  0.99%  sort.Sort
-         0     0% 65.46%      0.06s  0.99%  sort.pdqsort
-         0     0% 65.46%      0.05s  0.82%  encoding/json.condAddrEncoder.encode
-         0     0% 65.46%      0.05s  0.82%  encoding/json.marshalerEncoder
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/common.CopyBytes (inline)
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/state.(*StateDB).GetCode
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/state.(*StateDB).MergeParallelChildInto
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/state.(*accessList).AddAddress (inline)
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/state.(*stateObject).AddBalance
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/types.(*DynamicFeeTx).decode
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/types.(*Transaction).GasPrice
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/core/types.(*Transaction).decodeTyped
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/ethdb/memorydb.(*batch).Put
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/rlp.(*typeCache).info
-         0     0% 65.46%      0.05s  0.82%  github.com/ethereum/go-ethereum/rlp.makeSliceWriter.func2
-     0.01s  0.16% 65.62%      0.05s  0.82%  github.com/ethereum/go-ethereum/rlp.makeStructWriter.func1
-         0     0% 65.62%      0.05s  0.82%  github.com/ethereum/go-ethereum/trie.(*Trie).Get
-     0.01s  0.16% 65.79%      0.05s  0.82%  github.com/ethereum/go-ethereum/trie.(*Trie).get
-         0     0% 65.79%      0.05s  0.82%  github.com/ethereum/go-ethereum/trie.(*Trie).insert
-         0     0% 65.79%      0.05s  0.82%  github.com/ethereum/go-ethereum/trie.(*hasher).hashData
-         0     0% 65.79%      0.05s  0.82%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Update.func1
-         0     0% 65.79%      0.05s  0.82%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).insert
-     0.05s  0.82% 66.61%      0.05s  0.82%  internal/runtime/maps.ctrlGroup.matchH2 (inline)
-         0     0% 66.61%      0.05s  0.82%  runtime.(*mheap).freeSpan (inline)
-     0.02s  0.33% 66.94%      0.05s  0.82%  runtime.(*mheap).initSpan
-         0     0% 66.94%      0.05s  0.82%  runtime.(*pageAlloc).scavenge.func1
-         0     0% 66.94%      0.05s  0.82%  runtime.(*pageAlloc).scavengeOne
-         0     0% 66.94%      0.05s  0.82%  runtime.(*sweepLocked).sweep.(*mheap).freeSpan.func2
-         0     0% 66.94%      0.05s  0.82%  runtime.(*unwinder).next
-         0     0% 66.94%      0.05s  0.82%  runtime.gcParkAssist
-         0     0% 66.94%      0.05s  0.82%  runtime.mallocgcLarge
-     0.03s  0.49% 67.43%      0.05s  0.82%  runtime.pcvalue
-         0     0% 67.43%      0.05s  0.82%  runtime.stopm
-         0     0% 67.43%      0.05s  0.82%  runtime.sysUnused (inline)
-     0.05s  0.82% 68.26%      0.05s  0.82%  runtime.sysUnusedOS
-         0     0% 68.26%      0.05s  0.82%  runtime.sysUsed (inline)
-     0.05s  0.82% 69.08%      0.05s  0.82%  runtime.sysUsedOS
-     0.05s  0.82% 69.90%      0.05s  0.82%  runtime.typePointers.next
-         0     0% 69.90%      0.05s  0.82%  runtime.unlock2Wake
-         0     0% 69.90%      0.05s  0.82%  runtime.wbMove
-     0.01s  0.16% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core.BuildTransactionStorageParallelGroups
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core/rawdb.WriteBlock
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core/rawdb.WriteBody
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core/types.(*Transaction).EncodeRLP
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core/types.encodeForDerive
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/core/vm.NewEVM
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/ethdb/memorydb.(*batch).Write
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/rlp.(*EncoderBuffer).ToBytes (inline)
-         0     0% 70.07%      0.04s  0.66%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).makeBytes (inline)
-     0.02s  0.33% 70.39%      0.04s  0.66%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).writeBytes
-         0     0% 70.39%      0.04s  0.66%  github.com/ethereum/go-ethereum/rlp.makeStructWriter.func2
-         0     0% 70.39%      0.04s  0.66%  github.com/ethereum/go-ethereum/trie/trienode.(*NodeSet).AddNode (inline)
-         0     0% 70.39%      0.04s  0.66%  internal/sync.(*Mutex).Unlock (inline)
-         0     0% 70.39%      0.04s  0.66%  internal/sync.(*Mutex).unlockSlow
-         0     0% 70.39%      0.04s  0.66%  internal/sync.runtime_Semrelease
-     0.02s  0.33% 70.72%      0.04s  0.66%  math/big.(*Int).Cmp
-     0.04s  0.66% 71.38%      0.04s  0.66%  runtime.(*gList).pop (inline)
-         0     0% 71.38%      0.04s  0.66%  runtime.(*mcache).prepareForSweep
-         0     0% 71.38%      0.04s  0.66%  runtime.(*mcache).releaseAll
-         0     0% 71.38%      0.04s  0.66%  runtime.(*mcentral).uncacheSpan
-         0     0% 71.38%      0.04s  0.66%  runtime.(*mheap).nextSpanForSweep
-     0.02s  0.33% 71.71%      0.04s  0.66%  runtime.(*stkframe).getStackMap
-     0.01s  0.16% 71.88%      0.04s  0.66%  runtime.(*unwinder).resolveInternal
-         0     0% 71.88%      0.04s  0.66%  runtime.(*wbBuf).get2 (inline)
-         0     0% 71.88%      0.04s  0.66%  runtime.gfget
-         0     0% 71.88%      0.04s  0.66%  runtime.gfput
-         0     0% 71.88%      0.04s  0.66%  runtime.mallocgcSmallScanHeader
-         0     0% 71.88%      0.04s  0.66%  runtime.mapaccess2
-         0     0% 71.88%      0.04s  0.66%  runtime.memclrNoHeapPointersChunked
-         0     0% 71.88%      0.04s  0.66%  runtime.resetspinning
-         0     0% 71.88%      0.04s  0.66%  runtime.semacquire1
-         0     0% 71.88%      0.04s  0.66%  runtime.semrelease1
-     0.01s  0.16% 72.04%      0.04s  0.66%  sort.partition
-         0     0% 72.04%      0.04s  0.66%  sync.(*Mutex).Unlock (partial-inline)
+         0     0%     0%      1.87s 29.04%  github.com/ethereum/go-ethereum/benchmarks.TestParallelBenchmarkAgainstRealBlocks
+         0     0%     0%      1.87s 29.04%  testing.tRunner
+         0     0%     0%      1.81s 28.11%  github.com/ethereum/go-ethereum/benchmarks.timeInsertLocal
+         0     0%     0%      1.81s 28.11%  github.com/ethereum/go-ethereum/benchmarks.timeParallelInsert (inline)
+     0.03s  0.47%  0.47%      1.58s 24.53%  runtime.systemstack
+         0     0%  0.47%      1.57s 24.38%  github.com/ethereum/go-ethereum/core.(*StateProcessor).Process.func1
+         0     0%  0.47%      1.39s 21.58%  github.com/ethereum/go-ethereum/core.ApplyTransactionWithEVM
+         0     0%  0.47%      1.25s 19.41%  github.com/ethereum/go-ethereum/core.(*BlockChain).InsertChain
+         0     0%  0.47%      1.25s 19.41%  github.com/ethereum/go-ethereum/core.(*BlockChain).insertChain
+         0     0%  0.47%      1.05s 16.30%  github.com/ethereum/go-ethereum/core.(*BlockChain).processBlock
+         0     0%  0.47%      1.01s 15.68%  github.com/ethereum/go-ethereum/core.ApplyMessage
+     0.01s  0.16%  0.62%      0.99s 15.37%  github.com/ethereum/go-ethereum/core.(*stateTransition).execute
+     0.02s  0.31%  0.93%      0.96s 14.91%  runtime.mallocgc
+         0     0%  0.93%      0.80s 12.42%  runtime.gcBgMarkWorker.func2
+         0     0%  0.93%      0.80s 12.42%  runtime.gcDrain
+     0.01s  0.16%  1.09%      0.80s 12.42%  runtime.lock2
+         0     0%  1.09%      0.80s 12.42%  runtime.lockWithRank (inline)
+         0     0%  1.09%      0.79s 12.27%  runtime.gcBgMarkWorker
+         0     0%  1.09%      0.79s 12.27%  runtime.lock (partial-inline)
+     0.73s 11.34% 12.42%      0.73s 11.34%  runtime.semasleep
+     0.01s  0.16% 12.58%      0.71s 11.02%  runtime.schedule
+     0.01s  0.16% 12.73%      0.69s 10.71%  runtime.mcall
+         0     0% 12.73%      0.63s  9.78%  runtime.findRunnable
+         0     0% 12.73%      0.60s  9.32%  github.com/ethereum/go-ethereum/core/state.(*StateDB).getStateObject
+         0     0% 12.73%      0.56s  8.70%  github.com/ethereum/go-ethereum/core.(*Genesis).Commit
+         0     0% 12.73%      0.56s  8.70%  github.com/ethereum/go-ethereum/core.NewBlockChain
+         0     0% 12.73%      0.55s  8.54%  github.com/ethereum/go-ethereum/core.SetupGenesisBlockWithOverride
+         0     0% 12.73%      0.53s  8.23%  golang.org/x/crypto/sha3.(*state).permute (inline)
+     0.53s  8.23% 20.96%      0.53s  8.23%  golang.org/x/crypto/sha3.keccakF1600
+     0.03s  0.47% 21.43%      0.52s  8.07%  runtime.newobject
+         0     0% 21.43%      0.48s  7.45%  github.com/ethereum/go-ethereum/core/state.(*multiStateReader).Account
+         0     0% 21.43%      0.48s  7.45%  github.com/ethereum/go-ethereum/core/state.(*trieReader).Account
+         0     0% 21.43%      0.47s  7.30%  github.com/ethereum/go-ethereum/core.(*BlockChain).writeBlockAndSetHead
+         0     0% 21.43%      0.45s  6.99%  github.com/ethereum/go-ethereum/core.(*BlockChain).writeBlockWithState
+         0     0% 21.43%      0.44s  6.83%  runtime.gcDrainMarkWorkerDedicated (inline)
+     0.01s  0.16% 21.58%      0.44s  6.83%  runtime.scanSpan
+         0     0% 21.58%      0.43s  6.68%  github.com/ethereum/go-ethereum/core.(*stateTransition).preCheck
+         0     0% 21.58%      0.42s  6.52%  github.com/ethereum/go-ethereum/core.flushAlloc
+         0     0% 21.58%      0.42s  6.52%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Commit
+         0     0% 21.58%      0.42s  6.52%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commitAndFlush
+     0.01s  0.16% 21.74%      0.42s  6.52%  runtime.park_m
+     0.07s  1.09% 22.83%      0.39s  6.06%  runtime.mallocgcSmallScanNoHeader
+     0.15s  2.33% 25.16%      0.38s  5.90%  runtime.scanObjectsSmall
+     0.01s  0.16% 25.31%      0.37s  5.75%  golang.org/x/crypto/sha3.(*state).Read
+         0     0% 25.31%      0.36s  5.59%  github.com/ethereum/go-ethereum/core/state.(*StateDB).GetNonce
+     0.03s  0.47% 25.78%      0.36s  5.59%  github.com/ethereum/go-ethereum/trie.(*StateTrie).GetAccount
+         0     0% 25.78%      0.36s  5.59%  golang.org/x/crypto/sha3.(*state).padAndPermute
+         0     0% 25.78%      0.36s  5.59%  runtime.gcDrainMarkWorkerIdle (inline)
+     0.28s  4.35% 30.12%      0.36s  5.59%  runtime.tryDeferToSpanScan
+         0     0% 30.12%      0.35s  5.43%  github.com/ethereum/go-ethereum/core.(*StateProcessor).Process
+         0     0% 30.12%      0.35s  5.43%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Finalise
+     0.02s  0.31% 30.43%      0.35s  5.43%  github.com/ethereum/go-ethereum/core/state.(*trieReader).account
+     0.02s  0.31% 30.75%      0.31s  4.81%  runtime.mapassign
+         0     0% 30.75%      0.30s  4.66%  runtime.newstack
+         0     0% 30.75%      0.29s  4.50%  github.com/ethereum/go-ethereum/core/state.(*StateDB).IntermediateRoot
+         0     0% 30.75%      0.29s  4.50%  runtime.gopreempt_m (inline)
+         0     0% 30.75%      0.29s  4.50%  runtime.goschedImpl
+         0     0% 30.75%      0.29s  4.50%  runtime.morestack
+         0     0% 30.75%      0.29s  4.50%  runtime.runSafePointFn
+         0     0% 30.75%      0.28s  4.35%  slices.SortFunc[go.shape.[]github.com/ethereum/go-ethereum/common.Address,go.shape.[20]uint8] (inline)
+         0     0% 30.75%      0.28s  4.35%  slices.pdqsortCmpFunc[go.shape.[20]uint8]
+         0     0% 30.75%      0.26s  4.04%  github.com/ethereum/go-ethereum/core/types.DeriveSha
+         0     0% 30.75%      0.26s  4.04%  runtime.goexit0
+         0     0% 30.75%      0.25s  3.88%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commit
+     0.07s  1.09% 31.83%      0.25s  3.88%  runtime.mallocgcSmallNoscan
+         0     0% 31.83%      0.24s  3.73%  golang.org/x/sync/errgroup.(*Group).Go.func1
+     0.22s  3.42% 35.25%      0.24s  3.73%  runtime.preemptM
+         0     0% 35.25%      0.23s  3.57%  github.com/ethereum/go-ethereum/core.(*BlockValidator).ValidateState
+         0     0% 35.25%      0.23s  3.57%  github.com/ethereum/go-ethereum/triedb.(*Database).Commit
+         0     0% 35.25%      0.22s  3.42%  github.com/ethereum/go-ethereum/core/state.(*StateDB).CopyForParallelTx
+         0     0% 35.25%      0.22s  3.42%  github.com/ethereum/go-ethereum/trie.(*StackTrie).Update
+         0     0% 35.25%      0.22s  3.42%  github.com/ethereum/go-ethereum/trie.(*StackTrie).hash
+         0     0% 35.25%      0.22s  3.42%  github.com/ethereum/go-ethereum/trie.(*StackTrie).insert
+     0.11s  1.71% 36.96%      0.22s  3.42%  slices.partialInsertionSortCmpFunc[go.shape.[20]uint8]
+     0.01s  0.16% 37.11%      0.21s  3.26%  github.com/ethereum/go-ethereum/core/state.(*StateDB).updateStateObject
+         0     0% 37.11%      0.21s  3.26%  github.com/ethereum/go-ethereum/trie.ForGatherChildren
+         0     0% 37.11%      0.21s  3.26%  github.com/ethereum/go-ethereum/triedb/hashdb.(*cachedNode).forChildren
+         0     0% 37.11%      0.21s  3.26%  runtime.preemptone
+         0     0% 37.11%      0.20s  3.11%  github.com/ethereum/go-ethereum/core.(*BlockValidator).ValidateBody
+         0     0% 37.11%      0.20s  3.11%  github.com/ethereum/go-ethereum/core.(*insertIterator).next
+         0     0% 37.11%      0.20s  3.11%  github.com/ethereum/go-ethereum/core/state.(*StateDB).commit.func3
+     0.01s  0.16% 37.27%      0.20s  3.11%  github.com/ethereum/go-ethereum/rlp.DecodeBytes
+         0     0% 37.27%      0.20s  3.11%  github.com/ethereum/go-ethereum/trie.(*StateTrie).UpdateAccount
+     0.02s  0.31% 37.58%      0.20s  3.11%  runtime.(*mcache).nextFree
+         0     0% 37.58%      0.20s  3.11%  runtime.bgsweep
+     0.01s  0.16% 37.73%      0.19s  2.95%  runtime.makeslice
+         0     0% 37.73%      0.18s  2.80%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Prepare
+         0     0% 37.73%      0.18s  2.80%  github.com/ethereum/go-ethereum/core/vm.(*EVM).Call
+         0     0% 37.73%      0.18s  2.80%  github.com/ethereum/go-ethereum/rlp.(*Stream).Decode
+         0     0% 37.73%      0.18s  2.80%  github.com/ethereum/go-ethereum/trie.(*hasher).hashDataTo
+         0     0% 37.73%      0.18s  2.80%  golang.org/x/crypto/sha3.(*state).Write
+         0     0% 37.73%      0.18s  2.80%  internal/runtime/maps.(*table).rehash
+     0.18s  2.80% 40.53%      0.18s  2.80%  runtime.memclrNoHeapPointers
+         0     0% 40.53%      0.18s  2.80%  runtime.preemptall
+     0.02s  0.31% 40.84%      0.17s  2.64%  github.com/ethereum/go-ethereum/core/state.(*stateObject).deepCopy
+     0.01s  0.16% 40.99%      0.17s  2.64%  github.com/ethereum/go-ethereum/rlp.makeStructDecoder.func1
+         0     0% 40.99%      0.17s  2.64%  github.com/ethereum/go-ethereum/trie.(*Trie).Get
+     0.02s  0.31% 41.30%      0.17s  2.64%  github.com/ethereum/go-ethereum/trie.forGatherChildren
+         0     0% 41.30%      0.17s  2.64%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Commit
+     0.01s  0.16% 41.46%      0.17s  2.64%  runtime.(*mcache).refill
+         0     0% 41.46%      0.17s  2.64%  runtime.gcstopm
+     0.02s  0.31% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/core/state.(*stateObject).commit
+         0     0% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/trie.decodeNodeUnsafe
+         0     0% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/triedb.(*Database).Update
+         0     0% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Update
+         0     0% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).commit
+         0     0% 41.77%      0.16s  2.48%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).commit.func1
+     0.01s  0.16% 41.93%      0.16s  2.48%  internal/runtime/maps.(*table).grow
+     0.02s  0.31% 42.24%      0.16s  2.48%  internal/sync.(*Mutex).Lock (inline)
+     0.07s  1.09% 43.32%      0.16s  2.48%  runtime.scanObject
+         0     0% 43.32%      0.16s  2.48%  sync.(*Mutex).Lock (inline)
+     0.01s  0.16% 43.48%      0.15s  2.33%  github.com/ethereum/go-ethereum/core/state.newObject
+         0     0% 43.48%      0.15s  2.33%  github.com/ethereum/go-ethereum/crypto.Keccak256
+     0.01s  0.16% 43.63%      0.15s  2.33%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).encode
+         0     0% 43.63%      0.15s  2.33%  github.com/ethereum/go-ethereum/rlp.Encode
+         0     0% 43.63%      0.15s  2.33%  internal/runtime/maps.newGroups (inline)
+         0     0% 43.63%      0.15s  2.33%  internal/runtime/maps.newarray
+     0.05s  0.78% 44.41%      0.15s  2.33%  runtime.mapaccess2
+         0     0% 44.41%      0.15s  2.33%  runtime.newarray
+         0     0% 44.41%      0.14s  2.17%  github.com/ethereum/go-ethereum/core.BuildTransactionStorageParallelGroups
+     0.04s  0.62% 45.03%      0.14s  2.17%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Finalise.func1
+         0     0% 45.03%      0.14s  2.17%  github.com/ethereum/go-ethereum/rlp.EncodeToBytes
+     0.03s  0.47% 45.50%      0.14s  2.17%  github.com/ethereum/go-ethereum/trie.(*Trie).get
+         0     0% 45.50%      0.14s  2.17%  internal/runtime/maps.(*table).reset
+         0     0% 45.50%      0.14s  2.17%  internal/runtime/maps.newTable
+         0     0% 45.50%      0.14s  2.17%  internal/sync.(*Mutex).lockSlow
+         0     0% 45.50%      0.14s  2.17%  runtime.procyield (inline)
+     0.14s  2.17% 47.67%      0.14s  2.17%  runtime.procyieldAsm
+         0     0% 47.67%      0.14s  2.17%  runtime.wakep
+         0     0% 47.67%      0.13s  2.02%  github.com/ethereum/go-ethereum/core/rawdb.iterateTransactions.func2
+         0     0% 47.67%      0.13s  2.02%  github.com/ethereum/go-ethereum/crypto.Keccak256Hash
+     0.04s  0.62% 48.29%      0.13s  2.02%  runtime.(*sweepLocked).sweep
+         0     0% 48.29%      0.13s  2.02%  runtime.sweepone
+         0     0% 48.29%      0.13s  2.02%  runtime.unlock (inline)
+     0.09s  1.40% 49.69%      0.13s  2.02%  runtime.unlock2
+         0     0% 49.69%      0.13s  2.02%  runtime.unlockWithRank (inline)
+         0     0% 49.69%      0.12s  1.86%  encoding/json.(*encodeState).marshal
+         0     0% 49.69%      0.12s  1.86%  encoding/json.(*encodeState).reflectValue
+         0     0% 49.69%      0.12s  1.86%  encoding/json.Marshal
+         0     0% 49.69%      0.12s  1.86%  encoding/json.mapEncoder.encode
+         0     0% 49.69%      0.12s  1.86%  github.com/ethereum/go-ethereum/core/state.(*StateDB).createObject
+         0     0% 49.69%      0.12s  1.86%  github.com/ethereum/go-ethereum/core/types.SlimAccountRLP
+         0     0% 49.69%      0.12s  1.86%  github.com/ethereum/go-ethereum/trie.(*Trie).resolveAndTrack
+         0     0% 49.69%      0.12s  1.86%  runtime.forEachPInternal
+     0.01s  0.16% 49.84%      0.12s  1.86%  runtime.mapaccess1
+     0.01s  0.16% 50.00%      0.12s  1.86%  runtime.markroot
+     0.12s  1.86% 51.86%      0.12s  1.86%  runtime.nextFreeFast (inline)
+     0.11s  1.71% 53.57%      0.11s  1.71%  cmpbody
+     0.01s  0.16% 53.73%      0.11s  1.71%  github.com/ethereum/go-ethereum/core.declaredAddressSetsOverlap (inline)
+         0     0% 53.73%      0.11s  1.71%  github.com/ethereum/go-ethereum/core/state.(*StateDB).GetCode
+     0.01s  0.16% 53.88%      0.11s  1.71%  github.com/ethereum/go-ethereum/core/state.(*accessList).AddAddress (inline)
+         0     0% 53.88%      0.11s  1.71%  github.com/ethereum/go-ethereum/rlp.makePtrWriter.func1
+     0.05s  0.78% 54.66%      0.11s  1.71%  github.com/ethereum/go-ethereum/trie.keybytesToHex (inline)
+         0     0% 54.66%      0.11s  1.71%  runtime.mallocgcLarge
+         0     0% 54.66%      0.11s  1.71%  runtime.mapassign_faststr
+     0.10s  1.55% 56.21%      0.10s  1.55%  aeshashbody
+         0     0% 56.21%      0.10s  1.55%  bytes.Compare (inline)
+         0     0% 56.21%      0.10s  1.55%  github.com/ethereum/go-ethereum/common.Address.Cmp (inline)
+         0     0% 56.21%      0.10s  1.55%  github.com/ethereum/go-ethereum/core/state.(*StateDB).AddBalance
+         0     0% 56.21%      0.10s  1.55%  github.com/ethereum/go-ethereum/core/state.(*StateDB).getOrNewStateObject
+         0     0% 56.21%      0.10s  1.55%  github.com/ethereum/go-ethereum/trie.mustDecodeNodeUnsafe
+         0     0% 56.21%      0.10s  1.55%  github.com/ethereum/go-ethereum/trie/trienode.(*NodeSet).ForEachWithOrder
+     0.01s  0.16% 56.37%      0.10s  1.55%  golang.org/x/sync/errgroup.(*Group).Go
+     0.01s  0.16% 56.52%      0.10s  1.55%  runtime.(*mcentral).cacheSpan
+         0     0% 56.52%      0.10s  1.55%  runtime.(*mheap).alloc.func1
+     0.01s  0.16% 56.68%      0.10s  1.55%  runtime.(*mheap).allocSpan
+         0     0% 56.68%      0.10s  1.55%  runtime.gcMarkDone.forEachP.func5
+         0     0% 56.68%      0.10s  1.55%  runtime.osyield (inline)
+     0.01s  0.16% 56.83%      0.10s  1.55%  runtime.stealWork
+         0     0% 56.83%      0.09s  1.40%  encoding/json.condAddrEncoder.encode
+         0     0% 56.83%      0.09s  1.40%  encoding/json.marshalerEncoder
+         0     0% 56.83%      0.09s  1.40%  github.com/ethereum/go-ethereum/rlp.makeEncoderWriter.func2
+         0     0% 56.83%      0.09s  1.40%  github.com/ethereum/go-ethereum/trie.(*Trie).Update (inline)
+         0     0% 56.83%      0.09s  1.40%  github.com/ethereum/go-ethereum/trie.(*Trie).update
+         0     0% 56.83%      0.09s  1.40%  github.com/ethereum/go-ethereum/trie.(*hasher).encodeFullNode
+         0     0% 56.83%      0.09s  1.40%  github.com/ethereum/go-ethereum/trie.(*hasher).hash
+         0     0% 56.83%      0.09s  1.40%  internal/sync.runtime_doSpin
+         0     0% 56.83%      0.09s  1.40%  runtime.(*mcentral).uncacheSpan
+         0     0% 56.83%      0.09s  1.40%  runtime.deductAssistCredit
+     0.01s  0.16% 56.99%      0.09s  1.40%  runtime.gcAssistAlloc
+         0     0% 56.99%      0.09s  1.40%  runtime.memclrNoHeapPointersChunked
+     0.02s  0.31% 57.30%      0.09s  1.40%  runtime.memhash_varlen
+     0.09s  1.40% 58.70%      0.09s  1.40%  runtime.memmove
+         0     0% 58.70%      0.09s  1.40%  runtime.newproc.func1
+     0.01s  0.16% 58.85%      0.09s  1.40%  runtime.runqgrab
+         0     0% 58.85%      0.09s  1.40%  runtime.runqsteal
+         0     0% 58.85%      0.09s  1.40%  runtime.wbBufFlush1
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/core.(*stateTransition).buyGas
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/core.TransactionToMessage
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/core/rawdb.WriteBlock
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/core/types.(*Transaction).DecodeRLP
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.decodeDecoder
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.decodeListSlice
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.decodeSliceElems
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.makeListDecoder.func3
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.makePtrDecoder.makeSimplePtrDecoder.func1
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/rlp.makeSliceWriter.func2
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/trie.(*committer).commitChildren.func1
+         0     0% 58.85%      0.08s  1.24%  github.com/ethereum/go-ethereum/trie.(*hasher).encodeFullNode.func1
+     0.01s  0.16% 59.01%      0.08s  1.24%  github.com/ethereum/go-ethereum/trie.decodeFull
+     0.01s  0.16% 59.16%      0.08s  1.24%  runtime.(*mheap).alloc
+         0     0% 59.16%      0.08s  1.24%  runtime.(*pageAlloc).scavenge.func1
+         0     0% 59.16%      0.08s  1.24%  runtime.(*pageAlloc).scavengeOne
+     0.05s  0.78% 59.94%      0.08s  1.24%  runtime.(*spanSet).push
+     0.05s  0.78% 60.71%      0.08s  1.24%  runtime.gcmarknewobject
+         0     0% 60.71%      0.08s  1.24%  runtime.growslice
+     0.08s  1.24% 61.96%      0.08s  1.24%  runtime.runqgrab.osyield.func1
+     0.07s  1.09% 63.04%      0.08s  1.24%  runtime.semawakeup
+         0     0% 63.04%      0.08s  1.24%  runtime.sysUnused (inline)
+     0.08s  1.24% 64.29%      0.08s  1.24%  runtime.sysUnusedOS
+         0     0% 64.29%      0.08s  1.24%  runtime.wbBufFlush
+         0     0% 64.29%      0.08s  1.24%  runtime.wbBufFlush.func1
+     0.01s  0.16% 64.44%      0.07s  1.09%  gcWriteBarrier
+         0     0% 64.44%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/rawdb.WriteBody
+         0     0% 64.44%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/state.(*StateDB).CreateAccount
+     0.01s  0.16% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/state.(*stateObject).SetBalance
+         0     0% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/state.Storage.Copy
+         0     0% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/types.(*DynamicFeeTx).decode
+         0     0% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/core/types.(*Transaction).decodeTyped
+         0     0% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).writeTo
+         0     0% 64.60%      0.07s  1.09%  github.com/ethereum/go-ethereum/trie.decodeShort
+     0.07s  1.09% 65.68%      0.07s  1.09%  internal/runtime/maps.ctrlGroup.matchH2 (inline)
+     0.01s  0.16% 65.84%      0.07s  1.09%  maps.Clone[go.shape.map[github.com/ethereum/go-ethereum/common.Hash]github.com/ethereum/go-ethereum/common.Hash,go.shape.[32]uint8,go.shape.[32]uint8] (inline)
+         0     0% 65.84%      0.07s  1.09%  runtime.(*mcentral).grow
+     0.01s  0.16% 65.99%      0.07s  1.09%  runtime.mallocgcTiny
+         0     0% 65.99%      0.07s  1.09%  runtime.markroot.func1
+         0     0% 65.99%      0.07s  1.09%  runtime.newproc
+         0     0% 65.99%      0.07s  1.09%  runtime.typedmemmove
+         0     0% 65.99%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*StateDB).Exist
+         0     0% 65.99%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*StateDB).SetCode
+         0     0% 65.99%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*StateDB).SubBalance
+         0     0% 65.99%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*StateDB).markUpdate (inline)
+     0.02s  0.31% 66.30%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*journal).append
+         0     0% 66.30%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.(*journal).balanceChange
+     0.01s  0.16% 66.46%      0.06s  0.93%  github.com/ethereum/go-ethereum/core/state.newStateUpdate
+     0.01s  0.16% 66.61%      0.06s  0.93%  github.com/ethereum/go-ethereum/rlp.makeStructWriter.func1
+         0     0% 66.61%      0.06s  0.93%  github.com/ethereum/go-ethereum/rlp.makeStructWriter.func2
+         0     0% 66.61%      0.06s  0.93%  github.com/ethereum/go-ethereum/trie.(*Trie).insert
+     0.01s  0.16% 66.77%      0.06s  0.93%  github.com/ethereum/go-ethereum/trie.decodeRef
+         0     0% 66.77%      0.06s  0.93%  github.com/ethereum/go-ethereum/triedb.(*preimageStore).commit
+         0     0% 66.77%      0.06s  0.93%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).Update.func1
+         0     0% 66.77%      0.06s  0.93%  github.com/ethereum/go-ethereum/triedb/hashdb.(*Database).insert
+     0.01s  0.16% 66.93%      0.06s  0.93%  internal/runtime/maps.(*Map).Clone
+     0.03s  0.47% 67.39%      0.06s  0.93%  internal/runtime/maps.(*table).uncheckedPutSlot
+     0.02s  0.31% 67.70%      0.06s  0.93%  internal/runtime/maps.typedmemmove
+         0     0% 67.70%      0.06s  0.93%  maps.clone
+         0     0% 67.70%      0.06s  0.93%  math/big.nat.make (inline)
+     0.01s  0.16% 67.86%      0.06s  0.93%  runtime.bulkBarrierPreWrite
+         0     0% 67.86%      0.06s  0.93%  runtime.gcAssistAlloc.func2
+         0     0% 67.86%      0.06s  0.93%  runtime.gcAssistAlloc1
+         0     0% 67.86%      0.06s  0.93%  runtime.newproc1
+     0.01s  0.16% 68.01%      0.06s  0.93%  runtime.scanblock
+         0     0% 68.01%      0.06s  0.93%  runtime.stopTheWorldWithSema
+         0     0% 68.01%      0.05s  0.78%  github.com/ethereum/go-ethereum/core/types.(*DynamicFeeTx).encode
+         0     0% 68.01%      0.05s  0.78%  github.com/ethereum/go-ethereum/core/types.(*Transaction).EncodeRLP
+         0     0% 68.01%      0.05s  0.78%  github.com/ethereum/go-ethereum/core/types.(*Transaction).encodeTyped
+         0     0% 68.01%      0.05s  0.78%  github.com/ethereum/go-ethereum/ethdb/memorydb.(*batch).Write
+     0.01s  0.16% 68.17%      0.05s  0.78%  github.com/ethereum/go-ethereum/rlp.(*Stream).readFull
+     0.02s  0.31% 68.48%      0.05s  0.78%  github.com/ethereum/go-ethereum/rlp.(*encBuffer).writeBytes
+         0     0% 68.48%      0.05s  0.78%  github.com/ethereum/go-ethereum/trie.(*hasher).hashData
+         0     0% 68.48%      0.05s  0.78%  github.com/ethereum/go-ethereum/trie.(*trieReader).node
+         0     0% 68.48%      0.05s  0.78%  github.com/ethereum/go-ethereum/trie.compactToHex
+     0.02s  0.31% 68.79%      0.05s  0.78%  github.com/ethereum/go-ethereum/triedb/hashdb.(*reader).Node
+     0.03s  0.47% 69.25%      0.05s  0.78%  internal/runtime/maps.(*Iter).Next
+         0     0% 69.25%      0.05s  0.78%  internal/runtime/maps.NewEmptyMap (inline)
+     0.02s  0.31% 69.57%      0.05s  0.78%  reflect.Value.Set
+     0.05s  0.78% 70.34%      0.05s  0.78%  runtime.(*mspan).base (inline)
+     0.04s  0.62% 70.96%      0.05s  0.78%  runtime.(*mspan).writeHeapBitsSmall
+     0.01s  0.16% 71.12%      0.05s  0.78%  runtime.gcDrainN
+     0.01s  0.16% 71.27%      0.05s  0.78%  runtime.gcNextMarkRoot
+         0     0% 71.27%      0.05s  0.78%  runtime.gcStart
+         0     0% 71.27%      0.05s  0.78%  runtime.heapSetTypeNoHeader (inline)
+         0     0% 71.27%      0.05s  0.78%  runtime.makemap_small
+     0.01s  0.16% 71.43%      0.05s  0.78%  runtime.mapIterStart
+         0     0% 71.43%      0.05s  0.78%  runtime.notewakeup
+         0     0% 71.43%      0.05s  0.78%  runtime.ready
+     0.05s  0.78% 72.20%      0.05s  0.78%  runtime.spanClass.sizeclass (inline)
+     0.03s  0.47% 72.67%      0.04s  0.62%  encoding/json.appendCompact
+         0     0% 72.67%      0.04s  0.62%  encoding/json.ptrEncoder.encode
+         0     0% 72.67%      0.04s  0.62%  encoding/json.structEncoder.encode
+         0     0% 72.67%      0.04s  0.62%  encoding/json.textMarshalerEncoder
+         0     0% 72.67%      0.04s  0.62%  fmt.(*pp).doPrintf
+         0     0% 72.67%      0.04s  0.62%  fmt.(*pp).handleMethods
+         0     0% 72.67%      0.04s  0.62%  fmt.(*pp).printArg
+         0     0% 72.67%      0.04s  0.62%  fmt.Appendf
+         0     0% 72.67%      0.04s  0.62%  github.com/ethereum/go-ethereum/benchmarks.parseTestJSONFile
+     0.01s  0.16% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/common.CopyBytes (inline)
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/common/math.(*HexOrDecimal256).MarshalText
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/core.CanTransfer
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/core.MakeReceipt
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/rawdb.WritePreimages
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/state.(*StateDB).MergeParallelChildAccounts
+         0     0% 72.83%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/state.(*accessList).AddSlot (inline)
+     0.01s  0.16% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/types.(*Transaction).GasPrice
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/types.(*Transaction).Hash
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/types.Account.MarshalJSON
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/types.encodeForDerive
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/core/types.prefixedRlpHash
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/ethdb/memorydb.(*batch).Put
+         0     0% 72.98%      0.04s  0.62%  github.com/ethereum/go-ethereum/ethdb/memorydb.(*batch).Replay
+     0.01s  0.16% 73.14%      0.04s  0.62%  github.com/ethereum/go-ethereum/rlp.Split
+     0.01s  0.16% 73.29%      0.04s  0.62%  github.com/ethereum/go-ethereum/triedb/hashdb.(*cleaner).Put
+     0.04s  0.62% 73.91%      0.04s  0.62%  internal/runtime/atomic.(*Uint32).Load (inline)
+     0.02s  0.31% 74.22%      0.04s  0.62%  internal/runtime/maps.(*Map).getWithKeySmall
+         0     0% 74.22%      0.04s  0.62%  internal/runtime/maps.(*Map).growToTable
+     0.03s  0.47% 74.69%      0.04s  0.62%  internal/runtime/maps.(*Map).putSlotSmall
+     0.04s  0.62% 75.31%      0.04s  0.62%  internal/runtime/maps.(*groupReference).key (inline)
+         0     0% 75.31%      0.04s  0.62%  math/big.(*Int).Format
+         0     0% 75.31%      0.04s  0.62%  runtime.(*gcControllerState).enlistWorker
+     0.01s  0.16% 75.47%      0.04s  0.62%  runtime.(*spanSet).pop
+     0.01s  0.16% 75.62%      0.04s  0.62%  runtime.convT
+     0.01s  0.16% 75.78%      0.04s  0.62%  runtime.execute
+         0     0% 75.78%      0.04s  0.62%  runtime.gcMarkDone
+         0     0% 75.78%      0.04s  0.62%  runtime.gcMarkTermination
+         0     0% 75.78%      0.04s  0.62%  runtime.gfget
+         0     0% 75.78%      0.04s  0.62%  runtime.markrootBlock
+         0     0% 75.78%      0.04s  0.62%  runtime.procresize
+         0     0% 75.78%      0.04s  0.62%  runtime.readyWithTime.goready.func1
+         0     0% 75.78%      0.04s  0.62%  runtime.startTheWorldWithSema
+         0     0% 75.78%      0.04s  0.62%  runtime.startm
+         0     0% 75.78%      0.04s  0.62%  runtime.suspendG

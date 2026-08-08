@@ -19,8 +19,12 @@ type storageAccessPair struct {
 // addresses). Assumes access lists completely declare touched accounts.
 //
 // Groups are built greedily in block order: each group starts at the smallest
-// index not yet assigned; txs are scanned in ascending index order and a tx is
-// appended only if its address set does not intersect any member of the group.
+// index not yet assigned; later txs are scanned in ascending index order and
+// appended only if:
+//  1. their address set does not intersect the current group, and
+//  2. every earlier conflicting tx (smaller index, overlapping address set) is
+//     already assigned — otherwise a later nonce could ride in an earlier wave
+//     than its predecessor (e.g. {83,85} before {84} for the same sender).
 func BuildTransactionStorageParallelGroups(txs []*types.Transaction, signer types.Signer) ([][]int, error) {
 	n := len(txs)
 	if n == 0 {
@@ -59,11 +63,27 @@ func BuildTransactionStorageParallelGroups(txs []*types.Transaction, signer type
 			groupAddresses[addr] = struct{}{}
 		}
 		unassigned[seed] = false
-		for j := 0; j < n; j++ {
+		for j := seed + 1; j < n; j++ {
 			if !unassigned[j] {
 				continue
 			}
 			if declaredAddressSetsOverlap(addrSets[j], groupAddresses) {
+				continue
+			}
+			// Causality: any earlier tx that conflicts with j must already be
+			// assigned (to this or a previous wave). If it is still pending,
+			// adding j now would let j execute before that predecessor.
+			blocked := false
+			for k := 0; k < j; k++ {
+				if !unassigned[k] {
+					continue
+				}
+				if declaredAddressSetsOverlap(addrSets[j], addrSets[k]) {
+					blocked = true
+					break
+				}
+			}
+			if blocked {
 				continue
 			}
 			group = append(group, j)
@@ -84,7 +104,7 @@ func collectTransactionStorageSlotSets(txs []*types.Transaction) []map[storageAc
 	n := len(txs)
 	slotSets := make([]map[storageAccessPair]struct{}, n)
 	for i, tx := range txs {
-		acl := tx.AccessList()
+		acl := tx.WaveAccessList()
 		if acl == nil {
 			continue
 		}
@@ -103,21 +123,21 @@ func collectTransactionStorageSlotSets(txs []*types.Transaction) []map[storageAc
 
 // collectDeclaredAddressSets returns, per tx index, the set of declared
 // addresses: sender (from), recipient (to) if any, and every address listed in
-// the EIP-2930 access list (including address-only tuples).
+// the combined WaveAccessList (including address-only tuples).
 func collectDeclaredAddressSets(txs []*types.Transaction, signer types.Signer) ([]map[common.Address]struct{}, error) {
 	n := len(txs)
 	sets := make([]map[common.Address]struct{}, n)
 	for i, tx := range txs {
 		from, err := types.Sender(signer, tx)
 		if err != nil {
-			return nil, fmt.Errorf("tx %d: %w", i, err)
+			return nil, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
 		set := make(map[common.Address]struct{})
 		set[from] = struct{}{}
 		if to := tx.To(); to != nil {
 			set[*to] = struct{}{}
 		}
-		for _, tuple := range tx.AccessList() {
+		for _, tuple := range tx.WaveAccessList() {
 			set[tuple.Address] = struct{}{}
 		}
 		sets[i] = set
@@ -151,7 +171,7 @@ func normalizeReceiptCumulativeGas(receipts []*types.Receipt) {
 // Legacy transactions have no access list.
 func PrintTransactionAccessLists(txs []*types.Transaction) {
 	for i, tx := range txs {
-		acl := tx.AccessList()
+		acl := tx.WaveAccessList()
 		if acl == nil {
 			fmt.Printf("tx %d [%s]: no access list (legacy)\n", i, tx.Hash().Hex())
 			continue
