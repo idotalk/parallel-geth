@@ -6,3 +6,13 @@
 [2026-07-24][optimization/real_blocks][25560620.json][319_txs][1_runs] - Sequential: avg=0.021925s std=0.000000s, Parallel: avg=0.019938s std=0.000000s, Speedup: avg=1.100x std=0.000x
 [2026-07-24][optimization/real_blocks][25560699.json][243_txs][1_runs] - Sequential: avg=0.015779s std=0.000000s, Parallel: avg=0.019172s std=0.000000s, Speedup: avg=0.823x std=0.000x
 [2026-07-24][optimization/real_blocks][25582333.json][110_txs][1_runs] - Sequential: avg=0.007919s std=0.000000s, Parallel: avg=0.005846s std=0.000000s, Speedup: avg=1.355x std=0.000x
+[2026-08-08][optimization/real_blocks][25603091.json][442_txs][1_runs] - Sequential: avg=0.079018s std=0.000000s, Parallel: avg=0.074405s std=0.000000s, Speedup: avg=1.062x std=0.000x
+[2026-08-08][optimization/real_blocks][25603092.json][469_txs][1_runs] - Sequential: avg=0.101409s std=0.000000s, Parallel: avg=0.102085s std=0.000000s, Speedup: avg=0.993x std=0.000x
+[2026-08-08][optimization/real_blocks][25603093.json][172_txs][1_runs] - Sequential: avg=0.035024s std=0.000000s, Parallel: avg=0.035552s std=0.000000s, Speedup: avg=0.985x std=0.000x
+[2026-08-08][optimization/real_blocks][25603094.json][199_txs][1_runs] - Sequential: avg=0.053437s std=0.000000s, Parallel: avg=0.048588s std=0.000000s, Speedup: avg=1.100x std=0.000x
+[2026-08-08][optimization/real_blocks][25603095.json][118_txs][1_runs] - Sequential: avg=0.080044s std=0.000000s, Parallel: avg=0.061757s std=0.000000s, Speedup: avg=1.296x std=0.000x
+[2026-08-08][optimization/real_blocks][25603096.json][623_txs][1_runs] - Sequential: avg=0.137980s std=0.000000s, Parallel: avg=0.166055s std=0.000000s, Speedup: avg=0.831x std=0.000x
+[2026-08-08][optimization/real_blocks][25603097.json][223_txs][1_runs] - Sequential: avg=0.053185s std=0.000000s, Parallel: avg=0.046707s std=0.000000s, Speedup: avg=1.139x std=0.000x
+[2026-08-08][optimization/real_blocks][25603098.json][351_txs][1_runs] - Sequential: avg=0.091316s std=0.000000s, Parallel: avg=0.080228s std=0.000000s, Speedup: avg=1.138x std=0.000x
+[2026-08-08][optimization/real_blocks][25603099.json][92_txs][1_runs] - Sequential: avg=0.030619s std=0.000000s, Parallel: avg=0.025964s std=0.000000s, Speedup: avg=1.179x std=0.000x
+[2026-08-08][optimization/real_blocks][25603100.json][235_txs][1_runs] - Sequential: avg=0.064713s std=0.000000s, Parallel: avg=0.061447s std=0.000000s, Speedup: avg=1.053x std=0.000x
